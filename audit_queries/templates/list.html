@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+  <h1>Audit Queries</h1>
+  
+  <div>
+      <label for="querySelect">Select a Query:</label>
+      <select id="querySelect" onchange="displayVariables()">
+          {% for query in queries %}
+              <option value="{{ query.id }}" data-variables="{{ query.variables }}">{{ query.name }}</option>
+          {% endfor %}
+      </select>
+
+      <div id="variablesContainer">
+          <!-- This will be populated with input fields based on the selected query's variables -->
+      </div>
+
+      <button onclick="executeSelectedQuery()">Execute Selected Query</button>
+  </div>
+{% endblock %}
+{% block extra_js %}
+    <script src="{% static 'js/audit_queries.js' %}"></script>
+{% endblock %}

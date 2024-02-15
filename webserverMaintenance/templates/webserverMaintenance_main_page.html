@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+    <section>
+        <h2>WebServer Maintenance</h2>
+        <!--<button class="executeAllForCommand" data-command="StopJboss">Execute 'Stop Jboss' on All Servers</button>
+        <button class="executeAllForCommand" data-command="StartJboss">Execute 'Start Jboss' on All Servers</button>
+        <button class="executeAllForCommand" data-command="JbossQuickRestart">Execute 'Restart Proxy' on All Servers</button>
+        <button class="executeAllForCommand" data-command="StopHAProxy">Execute 'Stop HAProxy' on All Servers</button>
+        <button class="executeAllForCommand" data-command="StartHAProxy">Execute 'Start HAProxy' on All Servers</button>-->
+        <!-- Dynamically generate buttons and divs for each server -->
+        {% for server in remoteserver %}
+            <div class="server-section">
+                <h3>{{ server.friendly_name }} ({{ server.name }})</h3>
+                <button class="executeButton" data-server="{{ server.name }}" data-command="StopJboss">Stop Jboss</button>
+                <button class="executeButton" data-server="{{ server.name }}" data-command="StartJboss">Start Jboss (slow)</button>
+                <button class="executeButton" data-server="{{ server.name }}" data-command="JbossQuickRestart">Restart Proxy/Xero (Jboss)</button>
+                <button class="executeButton" data-server="{{ server.name }}" data-command="StopHAProxy">Stop HAProxy</button>
+                <button class="executeButton" data-server="{{ server.name }}" data-command="StartHAProxy">Start HAProxy</button>
+
+
+                <!-- Common processing and output section for each server -->
+                <div class="processing-message" id="processingMessage-{{ server.name }}" style="visibility: hidden;">
+                    Processing...
+                    <div class="progress-text">Time Elapsed: 0 seconds</div>
+                </div>
+                <div id="output-{{ server.name }}"></div>
+            </div>
+        {% endfor %}
+    </section>
+
+
+{% endblock %}
+{% block extra_js %}
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="{% static 'js/webservermaintenance.js' %}"></script>
+{% endblock %}

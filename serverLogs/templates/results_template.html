@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Search Results for: {{ search_name }}</h2>
+<p>On PACS Core: {{ pacs_core_name }}</p>
+<br><br>
+
+{% if results_list %}
+    <table border="1" cellspacing="0" cellpadding="5">
+        <thead>
+            <tr>
+                <th>Calling AE Info</th>
+                <th>Called AE Info</th>
+                <th>Timestamp</th>
+                <th>Reason</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for key, log_entry in results_list %}
+                <tr>
+                    <td>{{ key.0 }}</td>
+                    <td>{{ key.1 }}</td>
+                    <td>{{ log_entry.timestamp }}</td>
+                    <td>{{ log_entry.reason }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>No matching results found.</p>
+{% endif %}
+{% endblock %}

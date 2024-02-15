@@ -1,0 +1,9 @@
+Django
+paramiko
+python-ldap @ file:///D:\web/python_ldap-3.4.0-cp311-cp311-win_amd64.whl#sha256=857fc39de982dd344a9c241864a3cc09c8de6ba790dba5fd02a39c4d947f841d
+django-auth-ldap
+cx_Oracle
+pywinrm
+django-fernet-fields-v2
+smbprotocol
+loguru

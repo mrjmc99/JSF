@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+    <section>
+        <h2>Select a Query to Execute</h2>
+        <form id="queryForm" action="" method="get">
+            <label for="query">Query:</label>
+            <select name="query" id="query">
+                {% for query in queries %}
+                    <option value="{{ query.id }}" data-variables="{{ query.variables }}" data-querytype="{{ query.query_type }}">{{ query.name }}</option>
+                {% endfor %}
+            </select>
+            <label for="server">Server:</label>
+<select name="server" id="server">
+    {% for server in servers %}
+        <option value="{{ server.db_alias }}" data-type="{{ server.query_type }}">{{ server.friendly_name }}</option>
+    {% endfor %}
+</select>
+
+
+
+
+            <div id="variableInputs">
+                <!-- Dynamic variable inputs will go here -->
+            </div>
+
+            <button type="submit">Execute Query</button>
+        </form>
+        <div id="processing" style="display: none;">
+    <p>Processing your query...</p>
+    <p>Elapsed Time: <span id="timer">0</span> seconds</p>
+</div>
+
+    </section>
+{% endblock %}
+{% block extra_js %}
+    <script src="{% static 'js/oraclequeries.js' %}"></script>
+{% endblock %}
+
+
+
+
+
+
+
+

@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="center-content">
+        <h1>EI Support URLs</h1>
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th>URL</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for site in sites_list %}
+                    <tr>
+                        <td><a href="{{ site.url }}" class="table-link" target="_blank">{{ site.url }}</a></td>
+                        <td>{{ site.description }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

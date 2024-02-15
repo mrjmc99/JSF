@@ -1,0 +1,68 @@
+<!-- timezone_update.html -->
+
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<div class="center-content">
+    <form id="timezoneForm" method="post" action="{% url 'timezone_updater' %}">
+        {% csrf_token %}
+        {% if not device_updated %}
+            <label for="ei_systems">Select EI System:</label>
+            <select name="ei_systems" id="ei_systems">
+                {% for system in ei_systems %}
+                    <option value="{{ system.name }}" {% if request.method == 'POST' and request.POST.ei_systems == system.name %}selected{% endif %}>
+                        {{ system.name }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <br><br>
+
+            <label for="exsys_code">External System Code:</label>
+            <input type="text" name="exsys_code" id="exsys_code" value="{% if request.method == 'POST' %}{{ request.POST.exsys_code }}{% endif %}">
+
+            <br><br>
+            <input type="submit" name="look_up_timezone" value="Look Up Timezone" class="app-button">
+            <br><br>
+        {% endif %}
+        {% if not_found_message %}
+        <p>{{ not_found_message }}</p>
+        {% endif %}
+
+        {% if current_timezone %}
+            <p>Device Name: {{ device_name }}</p>
+            <p>Device Code: {{ device_code }}</p>
+            {% if current_timezone != 'Not Set' %}<p>Current Timezone: {{ current_timezone }}</p> {% endif %}
+            {% if current_timezone == 'Not Set' %}<p>Current Timezone: = Eastern</p> {% endif %}
+
+
+            <label for="new_timezone">Choose a timezone:</label>
+            <select name="new_timezone" id="new_timezone">
+                <option value="America/New_York">America/New_York (Eastern)</option>
+                <option value="America/Chicago">America/Chicago (Central)</option>
+                <option value="America/Denver">America/Denver (Mountain)</option>
+                <option value="America/Los_Angeles">America/Los_Angeles (Pacific)</option>
+            </select>
+
+            <br><br>
+            <input type="submit" name="update_timezone" value="Update Timezone" class="app-button" onclick="startTimer()">
+            <br><br>
+            <div id="pleaseWaitMessage" style="display: none;">Please wait... <br><br>The update can take between 30 and 60 seconds</div>
+            <br><br>
+            <div id="countupTimer" style="display: none;"></div>
+        {% endif %}
+
+        {% if device_updated %}
+            <p>Device Updated Successfully</p>
+            <p>Device Name: {{ device_name }}</p>
+            <p>Device Code: {{ device_code }}</p>
+            <p>New Timezone: {{ new_timezone }}</p>
+            <br><br>
+            <a href="{% url 'timezone_updater' %}" class="app-button">Update another Device</a>
+        {% endif %}
+    </form>
+</div>
+{% endblock %}
+{% block extra_js %}
+    <script src="{% static 'js/timezone_updater.js' %}"></script>
+{% endblock %}

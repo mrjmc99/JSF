@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+{% block content %}
+    <h2>{{ page_title }} - Accession: {{ params.accession }}</h2>
+
+    {% if columns and results %}
+        <button onclick="exportTableToCSV('resultsTable')">Export to CSV</button>
+        <table id="resultsTable" class="styled-table">
+            <thead>
+                <tr>
+                    {% for column in columns %}
+                        <th>{{ column }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in results %}
+                    <tr>
+                        {% for item, column_name in row|zip:columns %}
+                            {% if column_name != "IDENTIFIER" %}
+                                <td>{{ item|convert_epoch }}</td>
+                            {% else %}
+                                <td>{{ item }}</td>
+                            {% endif %}
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No results found.</p>
+    {% endif %}
+{% endblock %}

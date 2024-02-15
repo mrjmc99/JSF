@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<form method="post" action="{% url 'execute_search' %}">
+    {% csrf_token %}
+    <label for="core">PACS Core:</label>
+    <select name="core" id="core">
+        {% for core in cores %}
+        <option value="{{ core.id }}">{{ core.name }}</option>
+        {% endfor %}
+    </select>
+
+    <br><br>
+
+    <label for="predefined_search">Predefined Searches:</label>
+    <select name="predefined_search" id="predefined_search">
+        {% for search in predefined_searches %}
+        <option value="{{ search.id }}">{{ search.name }}</option>
+        {% endfor %}
+    </select>
+
+    <br><br>
+
+    <input type="submit" value="Search">
+    <div id="progressMessage" style="display: none;">Searching...</div>
+</form>
+{% endblock %}
+{% block extra_js %}
+    <script src="{% static 'js/searchlogs.js' %}"></script>
+{% endblock %}

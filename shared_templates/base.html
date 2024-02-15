@@ -1,0 +1,43 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}JSF{% endblock %}</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
+    <link rel="icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
+</head>
+<body>
+    <header class="header">
+    <div class="left-side">
+        {% if user.is_authenticated %}
+            Welcome, {{ user.first_name }}  {{ user.last_name }}  <!-- or {{ user.username }} depending on what you want to display -->
+        {% endif %}
+    </div>
+    <div class="center-logo">
+        <img src="{% static 'Company-logo.png' %}" alt="Company Logo" class="logo">
+        <img src="{% static 'doge.webp' %}" alt="Fun Logo" class="logo">
+    </div>
+    <nav class="navbar">
+        {% if not is_home_page %}
+            <a href="{% url 'landing_page' %}" class="home-button">Home</a>
+        {% endif %}
+        {% if user.is_authenticated %}
+            <a href="{% url 'logout' %}" class="logout-button">Logout</a>
+        {% endif %}
+    </nav>
+</header>
+
+    <main>
+        {% block content %}
+        <!-- Content will be inserted here by templates that extend base.html -->
+        {% endblock %}
+    </main>
+    <footer>
+        <!-- Common footer content -->
+    </footer>
+{% block extra_js %}
+    <script src="{% static 'js/base.js' %}"></script>
+    {% endblock %}
+</body>
+</html>
