@@ -8,3 +8,5 @@ keys.txt
 /static/admin
 /static/Company-logo.png
 /static/favicon.ico
+__pycache__/
+**/migrations/
