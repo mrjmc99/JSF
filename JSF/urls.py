@@ -13,6 +13,5 @@ urlpatterns = [
     path('', include('MainApp.urls')),
     path('audit_queries/', include('audit_queries.urls')),
     path('serverlogs/', include('serverLogs.urls')),
-    path('pacsscan/', include('pacsscan.urls')),
     path('timezone_updater/', include('timezone_updater.urls')),
 ]
