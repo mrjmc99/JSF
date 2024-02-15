@@ -1,3 +1,4 @@
+#serverlogs/views.py
 from django.contrib.auth.decorators import permission_required
 from django.shortcuts import render
 from concurrent.futures import ThreadPoolExecutor

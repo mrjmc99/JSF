@@ -1,3 +1,4 @@
+# mainapp/models.py
 from django.db import models
 
 class AppLink(models.Model):

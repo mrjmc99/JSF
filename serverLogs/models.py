@@ -1,3 +1,4 @@
+# serverlogs/models.py
 from django.db import models
 from fernet_fields import EncryptedCharField
 # Create your models here.

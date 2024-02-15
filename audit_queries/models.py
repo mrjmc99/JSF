@@ -1,3 +1,4 @@
+# audit_queries/models.py
 from django.db import models
 from oracleQuery.models import FriendlyDBName
 

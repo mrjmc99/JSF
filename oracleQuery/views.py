@@ -1,4 +1,4 @@
-# views.py
+# oraclequery/views.py
 from django.shortcuts import render
 from .utils import fetch_data  # import the function you created
 from django.db import connections

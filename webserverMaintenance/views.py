@@ -1,3 +1,4 @@
+# webservermaintenance/views.py
 from django.shortcuts import render
 from django.http import JsonResponse, HttpResponse
 from .models import RemoteServer,RemoteCommand

@@ -1,4 +1,4 @@
-# scripts.py
+# timezone_updater/scripts.py
 import requests
 TOKEN = None
 
