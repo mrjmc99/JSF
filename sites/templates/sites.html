@@ -6,15 +6,15 @@
         <table class="styled-table">
             <thead>
                 <tr>
-                    <th>URL</th>
-                    <th>Description</th>
+                    <th>APP</th>
+                    <!--<th>Description</th>-->
                 </tr>
             </thead>
             <tbody>
                 {% for site in sites_list %}
                     <tr>
-                        <td><a href="{{ site.url }}" class="table-link" target="_blank">{{ site.url }}</a></td>
-                        <td>{{ site.description }}</td>
+                        <td><a href="{{ site.url }}" class="table-link" target="_blank">{{ site.description }}</a></td>
+                        <!--<td>{{ site.description }}</td>-->
                     </tr>
                 {% endfor %}
             </tbody>
