@@ -8,20 +8,36 @@
 {% if results_list %}
     <table border="1" cellspacing="0" cellpadding="5">
         <thead>
-            <tr>
-                <th>Calling AE Info</th>
-                <th>Called AE Info</th>
-                <th>Timestamp</th>
-                <th>Reason</th>
-            </tr>
+            {% if is_specific_search  %}
+                <!-- Specific Search Table Headers -->
+                <tr>
+                    <th>Calling AE Info</th>
+                    <th>Called AE Info</th>
+                    <th>Timestamp</th>
+                    <th>Reason</th>
+                </tr>
+            {% else %}
+                <!-- Generic Search Table Headers -->
+                <tr>
+                    <th>Timestamp</th>
+                    <th>Log Entry</th>
+                </tr>
+            {% endif %}
         </thead>
         <tbody>
-            {% for key, log_entry in results_list %}
+            {% for result in results_list %}
                 <tr>
-                    <td>{{ key.0 }}</td>
-                    <td>{{ key.1 }}</td>
-                    <td>{{ log_entry.timestamp }}</td>
-                    <td>{{ log_entry.reason }}</td>
+                    {% if is_specific_search %}
+                        <!-- Specific Search Data Cells -->
+                        <td>{{ result.0.0 }}</td>
+                        <td>{{ result.0.1 }}</td>
+                        <td>{{ result.1.timestamp }}</td>
+                        <td>{{ result.1.reason }}</td>
+                    {% else %}
+                        <!-- Generic Search Data Cells -->
+                        <td>{{ result.0 }}</td>
+                        <td>{{ result.1 }}</td>
+                    {% endif %}
                 </tr>
             {% endfor %}
         </tbody>
@@ -29,4 +45,5 @@
 {% else %}
     <p>No matching results found.</p>
 {% endif %}
+
 {% endblock %}

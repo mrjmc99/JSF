@@ -87,131 +87,128 @@ def extract_and_convert_timestamp(timestamp_line):
 
 
 # Helper function to process log file
-def process_log_file(log_file_path, search_text, results_list):
-    attempts = 3  # Number of attempts to read the file
+def process_log_file(log_file_path, search_pattern, results_list, is_specific_search=False):
+    attempts = 3
 
     for attempt in range(attempts):
         try:
-            with open(log_file_path, 'rb') as file_obj:  # Use 'rb' for read-only binary mode
+            with open(log_file_path, 'rb') as file_obj:
                 content = file_obj.read().decode('utf-8', errors='ignore')
                 lines = content.splitlines()
 
                 for i, line in enumerate(lines):
-                    if search_text in line:
+                    if re.search(search_pattern, line):
                         timestamp = extract_and_convert_timestamp(lines[i - 1])
-                        log_details = extract_log_details(line)
 
-                        # Use a tuple (calling_ae, called_ae) as the key for the dictionary
-                        key = (log_details['calling_ae'], log_details['called_ae'])
+                        if is_specific_search:
+                            log_details = extract_log_details(line)
 
-                        # If the key already exists, compare the timestamps
-                        if any(entry[0] == key for entry in results_list):
-                            index = next((i for i, entry in enumerate(results_list) if entry[0] == key), None)
-                            existing_timestamp = results_list[index][1]['timestamp']
-                            if timestamp > existing_timestamp:  # If the new timestamp is newer
-                                results_list[index] = (key, {
+                            key = (log_details['calling_ae'], log_details['called_ae'])
+
+                            if any(entry[0] == key for entry in results_list):
+                                index = next((i for i, entry in enumerate(results_list) if entry[0] == key), None)
+                                existing_timestamp = results_list[index][1]['timestamp']
+                                if timestamp > existing_timestamp:
+                                    results_list[index] = ((key, {
+                                        'timestamp': timestamp,
+                                        'reason': log_details['reason'],
+                                        'calling_ae': log_details['calling_ae'] or "Unknown AE",
+                                        'called_ae': log_details['called_ae'] or "Unknown AE",
+                                    }))
+                            else:
+                                results_list.append((key, {
                                     'timestamp': timestamp,
                                     'reason': log_details['reason'],
                                     'calling_ae': log_details['calling_ae'] or "Unknown AE",
                                     'called_ae': log_details['called_ae'] or "Unknown AE",
-                                })
+                                }))
                         else:
-                            results_list.append((key, {
-                                'timestamp': timestamp,
-                                'reason': log_details['reason'],
-                                'calling_ae': log_details['calling_ae'] or "Unknown AE",
-                                'called_ae': log_details['called_ae'] or "Unknown AE",
-                            }))
-            break  # If successfully read, break out of the retry loop
+                            results_list.append((timestamp, line))
+
+            break
         except Exception as e:
-            # Log a warning and wait before retrying
-            print(f"File {log_file_path} is locked. Retrying in 2 seconds... ({attempt + 1}/{attempts})")
+            print(f"Error reading log file {log_file_path}: {e}")
             time.sleep(2)
         except FileNotFoundError:
-            # Log a warning and wait before retrying
             print(f"File {log_file_path} not found. Retrying in 2 seconds... ({attempt + 1}/{attempts})")
             time.sleep(2)
 
+
 # Helper function to process a single server
-def process_server(server, search_text, results_list):
-    # Extract credentials
+def process_server(server, search_pattern, results_list, is_specific_search=False):
     username_password = server.credentials
     username, password = username_password.split(':')
 
-    # Setup smbclient with the given credentials
     print(f"Attempting to connect to {server.name} with IP: {server.ip_address}")
     smbclient.register_session(server.ip_address, username=username, password=password)
 
     try:
-        # Combine the server's hostname and logs_folder to create the UNC path
         unc_path = f"\\\\{server.name}\\{server.logs_folder}"
         print(f"UNC Path: {unc_path}")
 
-        # Use unc_path when working with smbclient
         log_files = [f for f in smbclient.listdir(path=unc_path) if f.startswith('server.error')]
 
-        # Sort log_files by file name (assuming the format is 'server.error-YYYYMMDD_HHMMSS.log')
         log_files.sort(key=lambda x: x.split('-')[1].rstrip('.log'))
 
-        # Get the most recent two log files
-        recent_log_files = log_files[-2:]
+        recent_log_files = log_files[-1:]
 
         for log_file in recent_log_files:
             full_path = unc_path + '\\' + log_file
-            process_log_file(full_path, search_text, results_list)
+            process_log_file(full_path, search_pattern, results_list, is_specific_search)
 
-            # Log the processed file name
             print(f"Processed file: {log_file}")
 
     except Exception as e:
         print(f"Failed to connect to {server.name}. Error: {e}")
+    finally:
+        smbclient.reset_connection_cache()
 
+
+# Main function to execute search
 # Main function to execute search
 @permission_required('serverLogs.use_serverLogs')
 def execute_search(request):
-    # Get user input
     pacs_core_id = request.POST.get('core')
     free_text = request.POST.get('free_text_search')
     predefined_search_id = request.POST.get('predefined_search')
 
     if predefined_search_id:
         predefined_search = PredefinedSearch.objects.get(id=predefined_search_id)
-        search_text = predefined_search.search_query
+        search_pattern = predefined_search.search_query
+        is_specific_search = (predefined_search.name == "Search for Rejected Modalities")
     else:
-        search_text = free_text
+        search_pattern = free_text
+        is_specific_search = False
 
-    grouped_results = {}  # Dictionary to store grouped results
-
-    # Get servers for the selected PACS core
+    grouped_results = {}
     servers = RemoteWindowsServer.objects.filter(core_id=pacs_core_id)
-
-    # Create a list to store results
     results_list = []
 
-    # Process each server in parallel
     with ThreadPoolExecutor() as executor:
-        executor.map(lambda server: process_server(server, search_text, results_list), servers)
+        executor.map(lambda server: process_server(server, search_pattern, results_list, is_specific_search), servers)
 
-    # Sort the results_list based on timestamp in descending order
-    results_list.sort(key=lambda x: x[1]['timestamp'], reverse=True)
-    #print(results_list)
-
-    # Reset the SMB connection cache to close all connections
-    smbclient.reset_connection_cache()
+    if is_specific_search:
+        print(f"results list= {results_list}")
+        results_list.sort(key=lambda x: x[1]['timestamp'], reverse=True)
+    else:
+        print(f"results list= {results_list}")
+        results_list.sort(key=lambda x: x[1]['timestamp'] if isinstance(x, tuple) and len(x) > 1 else '0', reverse=True)
 
     pacs_core = PACSCore.objects.get(id=pacs_core_id)
     pacs_core_name = pacs_core.name
 
     if predefined_search_id:
-        predefined_search = PredefinedSearch.objects.get(id=predefined_search_id)
         search_name = predefined_search.name
     else:
         search_name = "Free Text Search"
 
     context = {
-        'results_list': results_list,  # Update the variable name
+        'results_list': results_list,
         'pacs_core_name': pacs_core_name,
-        'search_name': search_name
+        'search_name': search_name,
+        'is_specific_search': is_specific_search
     }
-
+    print(f'is_specific_search: {is_specific_search}')
     return render(request, 'results_template.html', context)
+
+
