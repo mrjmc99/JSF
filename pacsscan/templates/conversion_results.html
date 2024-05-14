@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<head>
+    <title>Convert PACS SCAN between System ID and MAC Address<</title>
+</head>
+<body>
+    <h1>Convert PACS SCAN between System ID and MAC Address</h1>
+
+    <!-- Form for PACS SCAN System ID to MAC conversion -->
+    <form method="post" action="{% url 'unscramble_mac' %}">
+        {% csrf_token %}
+        <label for="scrambled_mac">PACS SCAN System ID:</label>
+        <input type="text" name="scrambled_mac" required>
+        <button type="submit">Convert to MAC</button>
+    </form>
+
+    <!-- Form for MAC to PACS SCAN System ID conversion -->
+    <form method="get" action="{% url 'unscramble_mac' %}">
+        {% csrf_token %}
+        <label for="mac_address">MAC Address:</label>
+        <input type="text" name="mac_address" required>
+        <button type="submit">Convert to System ID</button>
+    </form>
+
+    <!-- Display results for both conversions -->
+    {% if scrambled_mac %}
+        <p>PACS SCAN System ID: {{ scrambled_mac }}</p>
+        <p>MAC Address: {{ unscrambled_mac }}</p>
+    {% endif %}
+
+    {% if mac_address %}
+        <p>MAC Address: {{ mac_address }}</p>
+        <p>PACS SCAN System ID: {{ generated_system_id }}</p>
+    {% endif %}
+</body>
+{% endblock %}

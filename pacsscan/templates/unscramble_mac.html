@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<head>
+    <title>Convert PACS SCAN System ID to Licensed MAC Address</title>
+</head>
+<body>
+    <h1>Convert PACS SCAN System ID to Licensed MAC Address</h1>
+
+    <form method="post" action="{% url 'unscramble_mac' %}">
+    {% csrf_token %}
+    <label for="scrambled_mac">PACS SCAN System ID:</label>
+    <input type="text" name="scrambled_mac" required>
+    <button type="submit">Convert to MAC</button>
+</form>
+
+</body>
+{% endblock %}

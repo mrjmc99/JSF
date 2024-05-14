@@ -14,4 +14,5 @@ urlpatterns = [
     path('audit_queries/', include('audit_queries.urls')),
     path('serverlogs/', include('serverLogs.urls')),
     path('timezone_updater/', include('timezone_updater.urls')),
+    path('unscramble_mac/', include('pacsscan.urls')),
 ]
