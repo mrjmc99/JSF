@@ -10,6 +10,7 @@ import requests
 import re
 import logging
 import socket
+import time
 
 # Form to select the EISystem
 class EISystemForm(forms.Form):
@@ -39,17 +40,31 @@ def release_token(ei_system):
     except requests.RequestException as e:
         logging.error(f"Failed to release token. Error: {str(e)}")
 
-def check_cluster_node_health(ip_address):
-    health_url = f"http://{ip_address}/status"
 
-    try:
-        response = requests.get(health_url, timeout=2)
-        response.raise_for_status()
-        return response.text.strip()
-    except Timeout:
-        return "Unavailable: (Starting, Stopping or unresponsive)"
-    except requests.RequestException as e:
-        return f"Unavailable: (Starting, Stopping or unresponsive) {str(e)}"
+def check_cluster_node_health(ip_address, max_retries=2):
+    health_url = f"http://{ip_address}/status"
+    retries = 0
+
+    while retries <= max_retries:
+        try:
+            response = requests.get(health_url, timeout=2)
+            response.raise_for_status()
+            health_status = response.text.strip()
+            print(f"Node {ip_address}: {response.status_code} - {response.text.strip()}")
+            return health_status, retries  # Return health status and number of retries
+        except Timeout:
+            health_status = "Unavailable: (Starting, Stopping or Unresponsive)"
+            print(f"Node {ip_address}: Timeout")
+        except requests.RequestException as e:
+            health_status = f"Unavailable: (Starting, Stopping or Unresponsive) {str(e)}"
+            print(f"Node {ip_address}: Error - {str(e)}")
+
+        retries += 1
+        time.sleep(1)  # Wait for 1 second before retrying
+
+    # If max retries exceeded
+    return health_status, retries
+
 
 def call_cluster_api(ei_system):
     get_token(ei_system)
@@ -79,8 +94,8 @@ def check_cluster_nodes(cluster_nodes):
         except (socket.herror, socket.gaierror):
             hostname = "Unknown"
 
-        health_status = check_cluster_node_health(ip_address)
-        statuses.append((ip_address, hostname, health_status))
+        health_status,retries = check_cluster_node_health(ip_address)
+        statuses.append((ip_address, hostname, health_status, retries))
 
     return statuses
 
@@ -99,7 +114,7 @@ def index(request):
                     'statuses': statuses,
                     'ei_system': ei_system,
                     'current_time': timezone.now(),
-                    'cluster_nodes': cluster_nodes
+                    'cluster_nodes': cluster_nodes,
                 })
     else:
         # Prepopulate the form with the first EISystem instance
