@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Cluster Status{% endblock %}
+
+{% block content %}
+<section>
+    <h2>Cluster Status for {{ ei_system.name }}</h2>
+    <p>Checked at: {{ current_time }}</p>
+
+    <!-- Display the cluster nodes response -->
+    <div class="cluster-nodes-response">
+        <h2>Current Cluster Nodes:</h2>
+        <p>{{ cluster_nodes }}</p>
+        <br>
+    </div>
+
+    <table class="styled-table">
+        <thead>
+            <tr>
+                <th>Node</th>
+                <th>Hostname</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ip, hostname, status in statuses %}
+            <tr>
+                <td>{{ ip }}</td>
+                <td>{{ hostname }}</td>
+                <td>{{ status }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <a href="{% url 'index' %}" class="home-button">Back</a>
+</section>
+{% endblock %}
