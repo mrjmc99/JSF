@@ -42,12 +42,12 @@ def release_token(ei_system):
 
 
 def check_cluster_node_health(ip_address, max_retries=2):
-    health_url = f"http://{ip_address}/status"
+    health_url = f"https://{ip_address}/status"
     retries = 0
 
     while retries <= max_retries:
         try:
-            response = requests.get(health_url, timeout=2)
+            response = requests.get(health_url, timeout=2, verify=0)
             response.raise_for_status()
             health_status = response.text.strip()
             print(f"Node {ip_address}: {response.status_code} - {response.text.strip()}")
