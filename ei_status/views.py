@@ -6,6 +6,7 @@ from django.views.decorators.cache import cache_control
 from requests import Timeout
 from django.utils import timezone
 from timezone_updater.models import EISystem
+from concurrent.futures import ThreadPoolExecutor
 import requests
 import re
 import logging
@@ -81,21 +82,28 @@ def call_cluster_api(ei_system):
     finally:
         release_token(ei_system)
 
+
+def check_single_node(ip_address):
+    try:
+        hostname, _, _ = socket.gethostbyaddr(ip_address)
+        if '.' in hostname:
+            hostname = hostname.split('.')[0]
+    except (socket.herror, socket.gaierror):
+        hostname = "Unknown"
+
+    health_status, retries = check_cluster_node_health(ip_address)
+    return ip_address, hostname, health_status, retries
+
+
 def check_cluster_nodes(cluster_nodes):
     nodes = re.findall(r'\b\d+\.\d+\.\d+\.\d+\b', cluster_nodes)
     statuses = []
 
-    for node in nodes:
-        ip_address = node
-        try:
-            hostname, _, _ = socket.gethostbyaddr(ip_address)
-            if '.' in hostname:
-                hostname = hostname.split('.')[0]
-        except (socket.herror, socket.gaierror):
-            hostname = "Unknown"
+    with ThreadPoolExecutor() as executor:
+        results = executor.map(check_single_node, nodes)
 
-        health_status,retries = check_cluster_node_health(ip_address)
-        statuses.append((ip_address, hostname, health_status, retries))
+    for result in results:
+        statuses.append(result)
 
     return statuses
 
