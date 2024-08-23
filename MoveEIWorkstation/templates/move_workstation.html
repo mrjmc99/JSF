@@ -1,52 +1,90 @@
-<!-- MoveEIWorkstation/templates/move_workstation.html -->
+<!-- MoveEIWorkstations/templates/move_workstation.html -->
 {% extends "base.html" %}
 
 {% block content %}
-  <h1>Move Workstation</h1>
+<h1>Move Workstation</h1>
 
-  <form method="post" id="searchForm">
+<form method="post" id="searchForm">
     {% csrf_token %}
     {{ form.db_alias.label_tag }} {{ form.db_alias }}
     {{ form.workstation_name.label_tag }} {{ form.workstation_name }}
     <button type="submit">Search</button>
-  </form>
+</form>
 
-  {% if workstation %}
-    <h2>Current Workstation Information</h2>
-    <ul>
-      <li><strong>Workstation Name:</strong> {{ workstation.3 }}</li>
-      <li><strong>Description:</strong> {{ workstation.4 }}</li>
-      <li><strong>IP Address:</strong> {{ workstation.5 }}</li>
-      <li><strong>Current Workstation Group:</strong> {{ workstation.0 }}</li>
-    </ul>
+{% if workstation %}
+<h2>Current Workstation Information</h2>
+<ul>
+    <li><strong>Workstation Name:</strong> {{ workstation.3 }}</li>
+    <li><strong>Description:</strong> {{ workstation.4 }}</li>
+    <li><strong>IP Address:</strong> {{ workstation.5 }}</li>
+    <li><strong>Current Workstation Group:</strong> {{ workstation.0 }}</li>
+</ul>
 
-    <form method="post" id="updateForm" onsubmit="showProcessing();">
-      {% csrf_token %}
-      {{ form.new_group.label_tag }} {{ form.new_group }}
-      <button type="submit">Update Group</button>
-      <div id="processing" style="display:none;">
-        Processing... <span id="timer">0</span> seconds
-      </div>
-    </form>
-  {% endif %}
+<form method="post" id="updateForm">
+  {% csrf_token %}
+  <input type="hidden" name="db_alias" value="{{ form.db_alias.value }}">
+  <input type="hidden" name="workstation_name" value="{{ form.workstation_name.value }}">
+  {{ form.new_group.label_tag }} {{ form.new_group }}
+  <button type="submit">Update Group</button>
+  <div id="processing" style="display:none;">
+    Processing... <span id="timer">0</span> seconds
+  </div>
+</form>
 
-  {% if messages %}
-    <ul class="messages">
-      {% for message in messages %}
-        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-      {% endfor %}
-    </ul>
-  {% endif %}
+{% endif %}
 
-  <script>
-    function showProcessing() {
-      document.getElementById("processing").style.display = "block";
-      let seconds = 0;
-      setInterval(function() {
-        seconds++;
-        document.getElementById("timer").textContent = seconds;
-      }, 1000);
-    }
-  </script>
+<div id="message" style="display:none;"></div>
+
+{% if messages %}
+<ul class="messages">
+    {% for message in messages %}
+    <li>{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
+
+<script>
+    document.getElementById("updateForm").addEventListener("submit", function(event) {
+        event.preventDefault();
+        let form = this;
+        let processing = document.getElementById("processing");
+        let timerElement = document.getElementById("timer");
+        let messageElement = document.getElementById("message");
+        let seconds = 0;
+
+        processing.style.display = "block";
+        let timer = setInterval(function() {
+            seconds++;
+            timerElement.textContent = seconds;
+        }, 1000);
+
+        fetch(form.action, {
+            method: form.method,
+            body: new FormData(form),
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        }).then(response => response.json())
+        .then(data => {
+            clearInterval(timer);
+            processing.style.display = "none";
+            messageElement.style.display = "block";
+            messageElement.textContent = data.message;
+            if (data.status === 'success') {
+                messageElement.style.color = 'green';
+            } else if (data.status === 'error') {
+                messageElement.style.color = 'red';
+            } else {
+                messageElement.style.color = 'blue';
+            }
+        }).catch(error => {
+            clearInterval(timer);
+            processing.style.display = "none";
+            messageElement.style.display = "block";
+            messageElement.textContent = 'An error occurred while processing your request.';
+            messageElement.style.color = 'red';
+        });
+    });
+</script>
 
 {% endblock %}

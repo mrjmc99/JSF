@@ -7,3 +7,10 @@ class WorkstationGroup(models.Model):
 
     def __str__(self):
         return self.name
+
+class AppPermissions(models.Model):
+    class Meta:
+        #abstract = True  # This ensures the model doesn't create a table
+        permissions = [
+            ("use_move_ei_workstations", "Can use Move EI Workstations"),
+        ]
