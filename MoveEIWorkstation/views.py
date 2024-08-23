@@ -5,7 +5,7 @@ from django.db import connections
 from .forms import WorkstationForm
 from django.contrib.auth.decorators import permission_required
 
-@permission_required('moveEIWorkstation.use_move_ei_workstations')
+@permission_required('MoveEIWorkstation.use_move_ei_workstations')
 def move_workstation(request):
     workstation = None
     response_data = {}
