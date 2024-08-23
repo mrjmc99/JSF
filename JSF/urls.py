@@ -16,4 +16,5 @@ urlpatterns = [
     path('timezone_updater/', include('timezone_updater.urls')),
     path('unscramble_mac/', include('pacsscan.urls')),
     path('ei_status/', include('ei_status.urls')),
+    path('move_ei_workstations/', include('MoveEIWorkstation.urls')),
 ]

@@ -1,0 +1,52 @@
+<!-- MoveEIWorkstation/templates/move_workstation.html -->
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Move Workstation</h1>
+
+  <form method="post" id="searchForm">
+    {% csrf_token %}
+    {{ form.db_alias.label_tag }} {{ form.db_alias }}
+    {{ form.workstation_name.label_tag }} {{ form.workstation_name }}
+    <button type="submit">Search</button>
+  </form>
+
+  {% if workstation %}
+    <h2>Current Workstation Information</h2>
+    <ul>
+      <li><strong>Workstation Name:</strong> {{ workstation.3 }}</li>
+      <li><strong>Description:</strong> {{ workstation.4 }}</li>
+      <li><strong>IP Address:</strong> {{ workstation.5 }}</li>
+      <li><strong>Current Workstation Group:</strong> {{ workstation.0 }}</li>
+    </ul>
+
+    <form method="post" id="updateForm" onsubmit="showProcessing();">
+      {% csrf_token %}
+      {{ form.new_group.label_tag }} {{ form.new_group }}
+      <button type="submit">Update Group</button>
+      <div id="processing" style="display:none;">
+        Processing... <span id="timer">0</span> seconds
+      </div>
+    </form>
+  {% endif %}
+
+  {% if messages %}
+    <ul class="messages">
+      {% for message in messages %}
+        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  <script>
+    function showProcessing() {
+      document.getElementById("processing").style.display = "block";
+      let seconds = 0;
+      setInterval(function() {
+        seconds++;
+        document.getElementById("timer").textContent = seconds;
+      }, 1000);
+    }
+  </script>
+
+{% endblock %}
