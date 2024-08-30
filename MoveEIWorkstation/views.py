@@ -1,14 +1,14 @@
-# MoveEIWorkstation/views.py
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.db import connections
-from .forms import WorkstationForm
 from django.contrib.auth.decorators import permission_required
+from django.contrib import messages
+from .forms import WorkstationForm
+
 
 @permission_required('MoveEIWorkstation.use_move_ei_workstations')
 def move_workstation(request):
     workstation = None
-    response_data = {}
 
     if request.method == 'POST':
         form = WorkstationForm(request.POST)
@@ -31,7 +31,7 @@ def move_workstation(request):
                 workstation = cursor.fetchone()
 
             if workstation:
-                if new_group:
+                if 'new_group' in request.POST:
                     # If the user has selected a new group, perform the update
                     with connections[db_alias].cursor() as cursor:
                         cursor.execute("""
@@ -39,27 +39,37 @@ def move_workstation(request):
                             SET WORKSTATION_GROUP = :group_id 
                             WHERE UPPER(name) = UPPER(:name)
                         """, {'group_id': new_group.wsg_id, 'name': workstation_name})
-                        response_data['status'] = 'success'
-                        response_data['message'] = 'Workstation group updated successfully!'
-                    return JsonResponse(response_data)
+                        messages.success(request, 'Workstation group updated successfully!')
+                        # After processing the form, clear the messages
+                        storage = messages.get_messages(request)
+                        list(storage)  # This iteration is necessary to clear the messages
+                        return JsonResponse({'status': 'success', 'message': 'Workstation group updated successfully!'})
                 else:
+                    # After processing the form, clear the messages
+                    storage = messages.get_messages(request)
+                    list(storage)  # This iteration is necessary to clear the messages
                     # Render the form with workstation details if only search is performed
                     return render(request, 'move_workstation.html', {
                         'form': form,
                         'workstation': workstation
                     })
             else:
-                response_data['status'] = 'error'
-                response_data['message'] = 'Workstation not found.'
-                return JsonResponse(response_data)
+                messages.error(request, 'Workstation not found.')
+                # After processing the form, clear the messages
+                storage = messages.get_messages(request)
+                list(storage)  # This iteration is necessary to clear the messages
+                return render(request, 'move_workstation.html', {'form': form})
+
         else:
-            print("Form errors:", form.errors)  # Debugging output
-            response_data['status'] = 'error'
-            response_data['message'] = 'Form validation failed.'
-            return JsonResponse(response_data)
+            messages.error(request, 'Form validation failed.')
+            # After processing the form, clear the messages
+            storage = messages.get_messages(request)
+            list(storage)  # This iteration is necessary to clear the messages
+            return render(request, 'move_workstation.html', {'form': form})
 
     else:
         form = WorkstationForm()
-
+        # After processing the form, clear the messages
+    storage = messages.get_messages(request)
+    list(storage)  # This iteration is necessary to clear the messages
     return render(request, 'move_workstation.html', {'form': form, 'workstation': workstation})
-
