@@ -26,7 +26,7 @@ def move_workstation(request):
                     FROM workstation ws
                     INNER JOIN workstation_group wsg ON ws.workstation_group=wsg.id
                     INNER JOIN LOCALISABLE loc ON wsg.name = loc.id
-                    WHERE ws.name LIKE :name
+                    WHERE UPPER(ws.name) = UPPER(:name)
                 """, {'name': workstation_name})
                 workstation = cursor.fetchone()
 
@@ -37,7 +37,7 @@ def move_workstation(request):
                         cursor.execute("""
                             UPDATE workstation 
                             SET WORKSTATION_GROUP = :group_id 
-                            WHERE name = :name
+                            WHERE UPPER(name) = UPPER(:name)
                         """, {'group_id': new_group.wsg_id, 'name': workstation_name})
                         response_data['status'] = 'success'
                         response_data['message'] = 'Workstation group updated successfully!'
