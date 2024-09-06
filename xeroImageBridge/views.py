@@ -33,6 +33,7 @@ def xero_imaging_bridge(request, xero_server_slug=None):
             })
 
         query_constraints = xero_config.query_constraints.format(patient_id=patient_id, accession_number=accession_number)
+        accession_number = accession_number or ""
 
         display_vars = xero_config.display_vars.format(patient_id=patient_id, accession_number=accession_number)
         if not accession_number:
