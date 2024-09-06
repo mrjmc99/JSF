@@ -18,4 +18,5 @@ urlpatterns = [
     path('ei_status/', include('ei_status.urls')),
     path('move_ei_workstations/', include('MoveEIWorkstation.urls')),
     path('webhook/', include('webhook.urls')),
+    path('xeroimagebridge/', include('xeroImageBridge.urls')),
 ]

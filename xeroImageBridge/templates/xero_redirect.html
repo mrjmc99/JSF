@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block content %}
+<head>
+    <title>Redirecting...</title>
+</head>
+<body>
+    <p>Redirecting to Xero...</p>
+    <script type="text/javascript">
+        window.location.href = "{{ xero_url }}";
+    </script>
+</body>
+
+{% endblock %}
