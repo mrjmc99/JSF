@@ -12,6 +12,7 @@ from .utils import get_xero_ticket
 from .models import XeroConfig
 from django.utils.text import slugify
 
+@permission_required('xeroImageBridge.use_xeroImageBridge')
 def xero_imaging_bridge(request, xero_server_slug=None):
     xero_servers = XeroConfig.objects.all()
 
