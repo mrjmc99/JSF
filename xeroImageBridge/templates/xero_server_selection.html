@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Select Xero Server</h1>
+
+{% for server in xero_servers %}
+    <form method="GET" action="{% url 'xero_imaging_bridge_by_server' server.xero_server_slug %}">
+        <button type="submit">{{ server.xero_server }}</button>
+    </form>
+{% endfor %}
+{% endblock %}

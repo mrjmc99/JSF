@@ -6,15 +6,10 @@
 <form method="POST" action="">
 
   {% csrf_token %}
-  <label for="xero_server">Select Xero Server:</label>
-    <select id="xero_server" name="xero_server">
-        {% for config in xero_servers %}
-            <option value="{{ config.id }}">{{ config.xero_server }}</option>
-        {% endfor %}
-    </select>
+
 
   <label for="accession_number">Accession Number:</label>
-  <input type="text" id="accession_number" name="accession_number" required>
+  <input type="text" id="accession_number" name="accession_number">
 
   <label for="patient_id">Patient ID:</label>
   <input type="text" id="patient_id" name="patient_id" required>

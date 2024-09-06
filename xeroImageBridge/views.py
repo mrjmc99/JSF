@@ -18,26 +18,24 @@ def xero_imaging_bridge(request, xero_server_slug=None):
     if xero_server_slug:
         xero_config = get_object_or_404(XeroConfig, xero_server_slug=slugify(xero_server_slug))
     else:
-        # Handle the case when no server is specified:
-        # Option 1: Redirect to a default or a listing page
-        # Option 2: Show a selection page or an error message
-        return render(request, 'xero_imaging_bridge_form.html', {
-            'xero_servers': xero_servers,
-            'error_message': 'Please select a Xero server.'
-        })
+        # If no slug is provided, show the server selection page
+        return render(request, 'xero_server_selection.html', {'xero_servers': xero_servers})
 
     if request.method in ['POST', 'GET']:
         accession_number = request.POST.get('accession_number') if request.method == 'POST' else request.GET.get('accession_number')
         patient_id = request.POST.get('patient_id') if request.method == 'POST' else request.GET.get('patient_id')
 
-        if not accession_number or not patient_id:
+        if not patient_id:
             return render(request, 'xero_imaging_bridge_form.html', {
                 'xero_servers': xero_servers,
                 'error_message': "All fields are required."
             })
 
         query_constraints = xero_config.query_constraints.format(patient_id=patient_id, accession_number=accession_number)
+
         display_vars = xero_config.display_vars.format(patient_id=patient_id, accession_number=accession_number)
+        if not accession_number:
+            display_vars = display_vars.replace("&AccessionNumber=", "")
 
         xero_ticket = get_xero_ticket(
             request.user.username,
