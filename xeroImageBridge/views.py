@@ -1,12 +1,5 @@
 from django.contrib.auth.decorators import permission_required
-
-secret_xero_server = 'server'
-#secret_xero_server = 'adcvwebpaclx011.multihosp.net'
-secret_jsf_user = 'jsf_user'  # Placeholder for JSF user
-secret_xero_user = 'user'  # Placeholder for Xero user
-secret_xero_password = 'password'
-# xeroImageBridge/views.py
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse
 from .utils import get_xero_ticket
 from .models import XeroConfig
