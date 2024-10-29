@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<form method="get" action="{% url 'search_professional' %}">
+    <label for="ei_systems">Select EI System:</label>
+    <select name="ei_systems" id="ei_systems">
+        {% for system in ei_systems %}
+            <option value="{{ system.name }}" {% if selected_ei_system and selected_ei_system.name == system.name %}selected{% endif %}>
+                {{ system.name }}
+            </option>
+        {% endfor %}
+    </select>
+
+    <br><br>
+
+    <label for="login_name">Login Name:</label>
+    <input type="text" id="login_name" name="login_name" value="{{ login_name }}" required="true">
+
+    <button type="submit">Search</button>
+</form>
+
+{% if selected_ei_system %}
+    <form method="get" action="{% url 'refresh_facilities' selected_ei_system.id %}">
+        <button type="submit">Refresh Facilities from API</button>
+    </form>
+{% endif %}
+
+{% if professional %}
+    <h2>User: {{ professional.userAccounts }} {{ professional.firstName }} {{ professional.lastName }}</h2>
+    <form method="post" action="{% url 'update_facilities' professional.professionId %}">
+    {% csrf_token %}
+    <input type="hidden" name="login_name" value="{{ login_name }}">
+    <h3>Current Facilities:</h3>
+    <div id="current-facilities">
+        {% for facility in facilities %}
+            <div>
+                <input type="checkbox" name="current_facilities" class="facility-checkbox" value="{{ facility.facility.id }}" checked>
+                {{ facility.facility.name }}
+            </div>
+        {% endfor %}
+    </div>
+        <button type="submit">Update Facilities</button>
+    <h3>Available Facility Groups:</h3>
+    <div id="facility-groups">
+        {% for group in all_groups %}
+            <div>
+                <input type="checkbox" class="group-checkbox" data-group-id="{{ group.id }}">
+                {{ group.name }}
+            </div>
+        {% endfor %}
+    </div>
+        <button type="submit">Update Facilities</button>
+
+        <h3>Available Facilities:</h3>
+    <div id="available-facilities">
+        {% for facility in all_facilities %}
+            <div>
+                <input type="checkbox" name="available_facilities" class="facility-checkbox" value="{{ facility.facility_id }}">
+                {{ facility.name }}
+            </div>
+        {% endfor %}
+    </div>
+
+
+
+    <input type="hidden" name="ei_systems" value="{{ selected_ei_system.name }}">
+    <button type="submit">Update Facilities</button>
+    </form>
+{% endif %}
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Function to get facilities associated with a given group ID
+        function getFacilitiesByGroup(groupId) {
+            let groupFacilities = [];
+
+            {% for group in all_groups %}
+                if (groupId == "{{ group.id }}") {
+                    groupFacilities = [{% for facility in group.facilities.all %}
+                        "{{ facility.facility_id }}",
+                    {% endfor %}];
+                }
+            {% endfor %}
+
+            return groupFacilities;
+        }
+
+        // Handle the group checkbox change event
+        document.querySelectorAll(".group-checkbox").forEach(function(groupCheckbox) {
+            groupCheckbox.addEventListener("change", function() {
+                const groupId = groupCheckbox.getAttribute("data-group-id");
+                const facilities = getFacilitiesByGroup(groupId);
+
+                facilities.forEach(function(facilityId) {
+                    const facilityCheckbox = document.querySelector(`input.facility-checkbox[value="${facilityId}"]`);
+                    if (facilityCheckbox) {
+                        facilityCheckbox.checked = groupCheckbox.checked;
+                    }
+                });
+            });
+        });
+    });
+</script>
+{% endblock %}

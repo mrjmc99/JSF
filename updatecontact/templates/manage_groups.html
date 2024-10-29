@@ -1,0 +1,17 @@
+# updatecontact/manage_groups.html
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<h3>Facility Groups</h3>
+<ul>
+    {% for group in groups %}
+        <li>{{ group.name }}
+            <ul>
+                {% for facility in group.facilities.all %}
+                    <li>{{ facility.name }}</li>
+                {% endfor %}
+            </ul>
+        </li>
+    {% endfor %}
+</ul>
+{% endblock %}

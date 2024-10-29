@@ -1,4 +1,4 @@
-# timezone_updater/utils.py
+# timezone_updater/scripts.py
 import requests
 TOKEN = None
 
@@ -10,7 +10,7 @@ def get_token(ei_system):
     params = {"user": ei_system.ei_user, "password": ei_system.ei_password}
 
     try:
-        response = requests.get(auth_url, params=params, verify=True)
+        response = requests.get(auth_url, params=params, verify=False)
         response.raise_for_status()
         TOKEN = response.text.split('CDATA[')[1].split(']]')[0]
         print("Token acquired successfully.")
@@ -60,7 +60,7 @@ def release_token(ei_system):
     auth_url = f"https://{ei_system.ei_fqdn}/authentication/logout"
     headers = {"Authorization": f"Bearer {TOKEN}"}
     try:
-        response = requests.get(auth_url, headers=headers, verify=True)
+        response = requests.get(auth_url, headers=headers, verify=False)
         response.raise_for_status()
         print("Token released successfully.")
     except requests.RequestException as e:

@@ -19,4 +19,5 @@ urlpatterns = [
     path('move_ei_workstations/', include('MoveEIWorkstation.urls')),
     path('webhook/', include('webhook.urls')),
     path('xeroimagebridge/', include('xeroImageBridge.urls')),
+    path('updatecontact/', include('updatecontact.urls')),
 ]
