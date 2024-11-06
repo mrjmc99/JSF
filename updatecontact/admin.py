@@ -13,3 +13,11 @@ admin.site.register(Facility, FacilityAdmin)
 class FacilityGroupAdmin(admin.ModelAdmin):
     list_display = ('name','ei_system')
     filter_horizontal = ('facilities',)
+
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        if obj:  # If editing an existing group
+            form.base_fields['facilities'].queryset = Facility.objects.filter(ei_system=obj.ei_system)
+        else:  # If creating a new group, show all facilities
+            form.base_fields['facilities'].queryset = Facility.objects.all()
+        return form
