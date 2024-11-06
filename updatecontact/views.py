@@ -62,12 +62,13 @@ def search_professional(request):
                         professional = data['results'][0]
                         professional_data = get_professional_details(professional['professionId'], selected_ei_system, TOKEN)
                         facilities = professional_data['contact']['professionalDepartments']
+                        facilities.sort(key=lambda x: x['facility']['name'])
                         assigned_facility_ids = [facility['facility']['id'] for facility in facilities]
 
                         # Filter available facilities that are not already assigned
                         all_facilities = Facility.objects.filter(ei_system=selected_ei_system).exclude(
                             facility_id__in=assigned_facility_ids
-                        )
+                        ).order_by('name')
                         # Get all facility groups for the selected EI system
                         all_groups = FacilityGroup.objects.filter(facilities__ei_system=selected_ei_system).distinct()
                     else:
@@ -91,53 +92,6 @@ def search_professional(request):
         'all_groups': all_groups,
     })
 
-
-@permission_required('updatecontact.use_updatecontact')
-def assign_groups(request, profession_id):
-    if request.method == 'POST':
-        selected_ei_system_name = request.POST.get('ei_systems')
-        selected_ei_system = get_object_or_404(EISystem, name=selected_ei_system_name)
-
-        # Get token
-        TOKEN = get_token(selected_ei_system)
-
-        # Get the existing professional details
-        professional_details = get_professional_details(profession_id, selected_ei_system, TOKEN)
-        updated_facilities = professional_details['contact']['professionalDepartments']
-
-        # Get selected facility group IDs from form submission
-        group_ids = request.POST.getlist('facility_groups')
-        for group_id in group_ids:
-            facility_group = get_object_or_404(FacilityGroup, pk=group_id)
-            for facility in facility_group.facilities.all():
-                if not any(f['facility']['id'] == facility.facility_id for f in updated_facilities):
-                    updated_facilities.append({
-                        'id': None,
-                        'facility': {
-                            'id': facility.facility_id,
-                            'name': facility.name
-                        },
-                        'accessType': {
-                            'name': 'Staff',
-                            'id': 10000
-                        }
-                    })
-
-        professional_details['contact']['professionalDepartments'] = updated_facilities
-        professional_details['contact']['shouldSave'] = True
-
-        # Perform API call to update professional details
-        update_success = update_professional_details(profession_id, selected_ei_system, TOKEN, professional_details)
-
-        # Release token after use
-        release_token(selected_ei_system, TOKEN)
-
-        if update_success:
-            messages.success(request, "Facility groups assigned successfully.")
-        else:
-            messages.error(request, "Failed to assign facility groups.")
-
-    return redirect('search_professional', profession_id=profession_id)
 
 
 
