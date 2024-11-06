@@ -1,3 +1,4 @@
+from django.contrib.auth.decorators import permission_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponseRedirect
 from django.urls import reverse
@@ -23,6 +24,7 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 
 
+@permission_required('updatecontact.use_updatecontact')
 def search_professional(request):
     professional = None
     facilities = []
@@ -90,6 +92,7 @@ def search_professional(request):
     })
 
 
+@permission_required('updatecontact.use_updatecontact')
 def assign_groups(request, profession_id):
     if request.method == 'POST':
         selected_ei_system_name = request.POST.get('ei_systems')
@@ -139,6 +142,7 @@ def assign_groups(request, profession_id):
 
 
 # View to refresh facilities from API
+@permission_required('updatecontact.use_updatecontact')
 def refresh_facilities(request, ei_system_id):
     selected_ei_system = get_object_or_404(EISystem, pk=ei_system_id)
 
@@ -188,6 +192,7 @@ def refresh_facilities(request, ei_system_id):
 
 
 # View for updating facilities
+@permission_required('updatecontact.use_updatecontact')
 def update_facilities(request, profession_id):
     if request.method == 'POST':
         selected_ei_system_name = request.POST.get('ei_systems')
@@ -264,6 +269,7 @@ def update_facilities(request, profession_id):
 
 
 # View for managing facility groups
+@permission_required('updatecontact.use_updatecontact')
 def manage_facility_groups(request):
     groups = FacilityGroup.objects.all()
     if request.method == 'POST':

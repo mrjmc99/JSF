@@ -11,5 +11,5 @@ admin.site.register(Facility, FacilityAdmin)
 
 @admin.register(FacilityGroup)
 class FacilityGroupAdmin(admin.ModelAdmin):
-    list_display = ('name',)
+    list_display = ('name','ei_system')
     filter_horizontal = ('facilities',)

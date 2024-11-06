@@ -15,3 +15,9 @@ class FacilityGroup(models.Model):
 
     def __str__(self):
         return self.name
+
+class AppPermissions(models.Model):
+    class Meta:
+        permissions = [
+            ("use_updatecontact", "Can use Contact Updater"),
+        ]
