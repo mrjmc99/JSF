@@ -70,7 +70,7 @@ def search_professional(request):
                             facility_id__in=assigned_facility_ids
                         ).order_by('name')
                         # Get all facility groups for the selected EI system
-                        all_groups = FacilityGroup.objects.filter(facilities__ei_system=selected_ei_system).distinct()
+                        all_groups = FacilityGroup.objects.filter(facilities__ei_system=selected_ei_system).distinct().order_by('name')
                     else:
                         all_facilities = Facility.objects.filter(ei_system=selected_ei_system)
 
