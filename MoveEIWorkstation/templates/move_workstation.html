@@ -20,7 +20,7 @@
 
 {% if create_option %}
 <h2>Workstation Not Found</h2>
-<p>Would you like to create a new workstation named "{{ form.workstation_name.value }}"?</p>
+<p>Would you like to create a new workstation <b>(CASE SENSITIVE!!!)</b> named: "{{ form.workstation_name.value }}"?</p>
 <button id="create-workstation"
         data-workstation-name="{{ form.workstation_name.value }}"
         data-db-alias="{{ form.db_alias.value }}">
@@ -87,6 +87,10 @@
                     messageElement.textContent = data.message;
                     if (data.status === 'success') {
                         messageElement.style.color = 'green';
+                        // Reload the page after a short delay
+                        setTimeout(() => {
+                            location.reload();
+                        }, 5000);
                     } else if (data.status === 'error') {
                         messageElement.style.color = 'red';
                     } else {
