@@ -1,20 +1,10 @@
 from django.contrib.auth.decorators import permission_required
-from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.contrib import messages
 from .models import Facility, FacilityGroup
 from .scripts import get_token, release_token, get_professional_details, update_professional_details, get_facilities_from_api
-from timezone_updater.models import EISystem
-import requests
 import urllib3
-import logging
-
-logging.basicConfig(level=logging.DEBUG)
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-TOKEN = None
-
-# View for searching a professional
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Facility
 from timezone_updater.models import EISystem
@@ -22,8 +12,11 @@ import requests
 import logging
 
 logging.basicConfig(level=logging.DEBUG)
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+TOKEN = None
 
 
+# View for searching a professional
 @permission_required('updatecontact.use_updatecontact')
 def search_professional(request):
     professional = None

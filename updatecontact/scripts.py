@@ -1,4 +1,4 @@
-# updatecontacts/scripts.py
+# updatecontact/scripts.py
 import requests
 
 # Function to get API auth token

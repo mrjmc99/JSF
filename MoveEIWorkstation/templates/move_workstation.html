@@ -18,6 +18,18 @@
     </ul>
 {% endif %}
 
+{% if create_option %}
+<h2>Workstation Not Found</h2>
+<p>Would you like to create a new workstation named "{{ form.workstation_name.value }}"?</p>
+<button id="create-workstation"
+        data-workstation-name="{{ form.workstation_name.value }}"
+        data-db-alias="{{ form.db_alias.value }}">
+    Create Workstation
+</button>
+{% endif %}
+
+
+
 {% if workstation %}
 <h2>Current Workstation Information</h2>
 <ul>
@@ -41,50 +53,101 @@
 {% endif %}
 
 <div id="message" style="display:none;"></div>
-
 <script>
-    document.getElementById("updateForm").addEventListener("submit", function(event) {
-        event.preventDefault();
-        let form = this;
-        let processing = document.getElementById("processing");
-        let timerElement = document.getElementById("timer");
-        let messageElement = document.getElementById("message");
-        let seconds = 0;
+    // Add event listener for the update form
+    document.addEventListener("DOMContentLoaded", function() {
+        const updateForm = document.getElementById("updateForm");
+        if (updateForm) {
+            updateForm.addEventListener("submit", function(event) {
+                event.preventDefault();
+                let form = this;
+                let processing = document.getElementById("processing");
+                let timerElement = document.getElementById("timer");
+                let messageElement = document.getElementById("message");
+                let seconds = 0;
 
-        processing.style.display = "block";
-        let timer = setInterval(function() {
-            seconds++;
-            timerElement.textContent = seconds;
-        }, 1000);
+                processing.style.display = "block";
+                let timer = setInterval(function() {
+                    seconds++;
+                    timerElement.textContent = seconds;
+                }, 1000);
 
-        fetch(form.action, {
-            method: form.method,
-            body: new FormData(form),
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        }).then(response => response.json())
-        .then(data => {
-            clearInterval(timer);
-            processing.style.display = "none";
-            messageElement.style.display = "block";
-            messageElement.textContent = data.message;
-            if (data.status === 'success') {
-                messageElement.style.color = 'green';
-            } else if (data.status === 'error') {
-                messageElement.style.color = 'red';
-            } else {
-                messageElement.style.color = 'blue';
-            }
-        }).catch(error => {
-            clearInterval(timer);
-            processing.style.display = "none";
-            messageElement.style.display = "block";
-            messageElement.textContent = 'An error occurred while processing your request.';
-            messageElement.style.color = 'red';
+                fetch(form.action, {
+                    method: form.method,
+                    body: new FormData(form),
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    clearInterval(timer);
+                    processing.style.display = "none";
+                    messageElement.style.display = "block";
+                    messageElement.textContent = data.message;
+                    if (data.status === 'success') {
+                        messageElement.style.color = 'green';
+                    } else if (data.status === 'error') {
+                        messageElement.style.color = 'red';
+                    } else {
+                        messageElement.style.color = 'blue';
+                    }
+                })
+                .catch(error => {
+                    clearInterval(timer);
+                    processing.style.display = "none";
+                    messageElement.style.display = "block";
+                    messageElement.textContent = 'An error occurred while processing your request.';
+                    messageElement.style.color = 'red';
+                });
+            });
+        }
+
+        // Add event listener for creating workstation
+        const createButton = document.getElementById("create-workstation");
+    if (createButton) {
+        createButton.addEventListener("click", function () {
+            const workstationName = this.dataset.workstationName;
+            const dbAlias = this.dataset.dbAlias; // Get the db_alias
+            const messageElement = document.getElementById("message");
+
+            fetch(`/move_ei_workstations/create_workstation/`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": "{{ csrf_token }}",
+                },
+                body: JSON.stringify({
+                    workstation_name: workstationName,
+                    ei_system: dbAlias, // Pass db_alias as the EI system
+                }),
+            })
+                .then((response) => response.json())
+                .then((data) => {
+                    messageElement.style.display = "block";
+                    if (data.status === "success") {
+                        messageElement.textContent = "Workstation created successfully! The page will refresh in 5 seconds so it can be moved.";
+                        messageElement.style.color = "green";
+
+                        // Reload the page after a short delay
+                        setTimeout(() => {
+                            location.reload();
+                        }, 5000);
+
+                    } else {
+                        messageElement.textContent = `Failed to create workstation: ${data.message}`;
+                        messageElement.style.color = "red";
+                    }
+                })
+                .catch((error) => {
+                    console.error("Fetch error:", error); // Log error to browser console
+                    messageElement.style.display = "block";
+                    messageElement.textContent = "An error occurred.";
+                    messageElement.style.color = "red";
+                });
         });
-    });
-
+    }
+});
 </script>
 
 

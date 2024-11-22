@@ -3,13 +3,20 @@ from django.shortcuts import render
 from django.db import connections
 from django.contrib.auth.decorators import permission_required
 from django.contrib import messages
+
+from oracleQuery.models import FriendlyDBName
 from .forms import WorkstationForm
+from django.views.decorators.csrf import csrf_exempt
+import json
+from updatecontact.scripts import get_token, release_token
+from .scripts import register_workstation
+from timezone_updater.models import EISystem
+
 
 
 @permission_required('MoveEIWorkstation.use_move_ei_workstations')
 def move_workstation(request):
     workstation = None
-
     if request.method == 'POST':
         form = WorkstationForm(request.POST)
 
@@ -58,7 +65,7 @@ def move_workstation(request):
                 # After processing the form, clear the messages
                 storage = messages.get_messages(request)
                 list(storage)  # This iteration is necessary to clear the messages
-                return render(request, 'move_workstation.html', {'form': form})
+                return render(request, 'move_workstation.html', {'form': form, 'create_option': True})
 
         else:
             messages.error(request, 'Form validation failed.')
@@ -73,3 +80,39 @@ def move_workstation(request):
     storage = messages.get_messages(request)
     list(storage)  # This iteration is necessary to clear the messages
     return render(request, 'move_workstation.html', {'form': form, 'workstation': workstation})
+
+
+@csrf_exempt
+@permission_required('MoveEIWorkstation.use_move_ei_workstations')
+def create_workstation(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            workstation_name = data.get('workstation_name')
+            db_alias = data.get('ei_system')
+
+            if not workstation_name:
+                return JsonResponse({'status': 'error', 'message': 'Workstation name is required.'})
+
+            if not db_alias:
+                return JsonResponse({'status': 'error', 'message': 'EI system (database alias) is required.'})
+
+            # Fetch the EI system configuration using db_alias
+            try:
+                friendly_name_entry = FriendlyDBName.objects.get(db_alias=db_alias)
+                ei_system = friendly_name_entry.friendly_name  # Get friendly name if needed
+            except FriendlyDBName.DoesNotExist:
+                return JsonResponse({'status': 'error', 'message': f"EI system '{db_alias}' not found."})
+
+            # Register the workstation
+            try:
+                result = register_workstation(ei_system, workstation_name)
+                return JsonResponse({'status': 'success', 'message': result.get('message', 'Workstation created successfully!')})
+            except Exception as e:
+                return JsonResponse({'status': 'error', 'message': f'Failed to create workstation: {str(e)}'})
+
+        except json.JSONDecodeError:
+            return JsonResponse({'status': 'error', 'message': 'Invalid JSON data received.'})
+
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method.'})
+
