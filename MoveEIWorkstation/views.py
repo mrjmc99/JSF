@@ -3,15 +3,11 @@ from django.shortcuts import render
 from django.db import connections
 from django.contrib.auth.decorators import permission_required
 from django.contrib import messages
-
 from oracleQuery.models import FriendlyDBName
 from .forms import WorkstationForm
 from django.views.decorators.csrf import csrf_exempt
 import json
-from updatecontact.scripts import get_token, release_token
 from .scripts import register_workstation
-from timezone_updater.models import EISystem
-
 
 
 @permission_required('MoveEIWorkstation.use_move_ei_workstations')
