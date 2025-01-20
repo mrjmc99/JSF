@@ -10,7 +10,10 @@
             </option>
         {% endfor %}
     </select>
-
+    <br><br>
+    <a href="{% url 'manage_facility_groups' %}">
+        <button type="button">Manage Facility Groups</button>
+    </a>
     <br><br>
 
     <label for="login_name">Login Name:</label>
@@ -21,8 +24,9 @@
 
 {% if selected_ei_system %}
     <form method="get" action="{% url 'refresh_facilities' selected_ei_system.id %}">
-        <button type="submit">Refresh Facilities from API</button>
+        <button type="submit">Refresh Available Facilities</button>
     </form>
+
 {% endif %}
 
 {% if professional %}

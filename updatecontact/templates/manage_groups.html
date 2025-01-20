@@ -1,17 +1,196 @@
-# updatecontact/manage_groups.html
 {% extends "base.html" %}
-{% load static %}
 {% block content %}
-<h3>Facility Groups</h3>
-<ul>
-    {% for group in groups %}
-        <li>{{ group.name }}
-            <ul>
-                {% for facility in group.facilities.all %}
-                    <li>{{ facility.name }}</li>
-                {% endfor %}
-            </ul>
-        </li>
-    {% endfor %}
-</ul>
+<div id="django-messages" style="display:none;">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+</div>
+
+<h2>Manage Facility Groups</h2>
+
+
+<!-- Step 1: Select an EI System -->
+<form method="get">
+    <label for="ei_system_id">Select EI System:</label>
+    <select name="ei_system_id" id="ei_system_id" onchange="this.form.submit()">
+        <option value="">-- Select EI System --</option>
+        {% for system in ei_systems %}
+            <option value="{{ system.id }}" {% if selected_ei_system and selected_ei_system.id == system.id %}selected{% endif %}>
+                {{ system.name }}
+            </option>
+        {% endfor %}
+    </select>
+</form>
+
+{% if selected_ei_system %}
+    <form method="get" action="{% url 'refresh_facilities' selected_ei_system.id %}" id="refresh-facilities-form">
+        <button type="submit" id="refresh-facilities-button">Refresh Available Facilities</button>
+    </form>
+    <a href="{% url 'search_professional' %}">
+        <button type="button">Manage EI Contacts</button>
+    </a>
+{% endif %}
+
+
+
+{% if selected_ei_system %}
+    <!-- Step 2: Select an Existing Group -->
+    <form method="get">
+        <input type="hidden" name="ei_system_id" value="{{ selected_ei_system.id }}">
+        <label for="group_id">Select Facility Group:</label>
+        <select name="group_id" id="group_id" onchange="this.form.submit()">
+            <option value="">-- Select Group --</option>
+            {% for group in facility_groups %}
+                <option value="{{ group.id }}" {% if selected_group and selected_group.id == group.id %}selected{% endif %}>
+                    {{ group.name }}
+                </option>
+            {% endfor %}
+        </select>
+    </form>
+
+    <!-- Step 3: Create a New Group (Hidden if Group is Selected) -->
+    <div id="create-group-section" {% if selected_group %}style="display:none;"{% endif %}>
+        <h3>Create New Facility Group</h3>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create_group">
+            <input type="hidden" name="ei_system_id" value="{{ selected_ei_system.id }}">
+            <label for="new_group_name">Group Name:</label>
+            <input type="text" name="new_group_name" required>
+            <button type="submit">Create Group</button>
+        </form>
+    </div>
+{% endif %}
+
+<!-- Step 4: Update Facilities for Selected Group -->
+{% if selected_group %}
+    <h3>Manage Facilities for Group: {{ selected_group.name }}</h3>
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="update_groups">
+        <input type="hidden" name="group_id" value="{{ selected_group.id }}">
+        <input type="hidden" name="ei_system_id" value="{{ selected_ei_system.id }}">
+        <button type="submit">Update Group</button>
+        <!-- Display Current Facilities First -->
+        <h3>Current Facilities in Group</h3>
+        <div id="current-facilities">
+            {% for facility in assigned_facilities %}
+                <div>
+                    <input type="checkbox" name="facilities" value="{{ facility.id }}" checked>
+                    {{ facility.name }}
+                </div>
+            {% empty %}
+                <p>No facilities currently assigned to this group.</p>
+            {% endfor %}
+        </div>
+        <button type="submit">Update Group</button>
+        <!-- Display Available Facilities Below -->
+        <h3>Available Facilities</h3>
+        <div id="available-facilities">
+            {% for facility in available_facilities %}
+                <div>
+                    <input type="checkbox" name="facilities" value="{{ facility.id }}">
+                    {{ facility.name }}
+                </div>
+            {% empty %}
+                <p>No additional facilities available for assignment.</p>
+            {% endfor %}
+        </div>
+
+        <button type="submit">Update Group</button>
+    </form>
+{% endif %}
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const groupSelect = document.getElementById("group_id");
+        const createGroupSection = document.getElementById("create-group-section");
+
+        if (groupSelect) {
+            groupSelect.addEventListener("change", function() {
+                if (groupSelect.value) {
+                    createGroupSection.style.display = "none";
+                } else {
+                    createGroupSection.style.display = "block";
+                }
+            });
+        }
+    });
+
+     document.addEventListener("DOMContentLoaded", function () {
+        const refreshButton = document.getElementById("refresh-facilities-button");
+        const refreshForm = document.getElementById("refresh-facilities-form");
+
+        if (refreshButton && refreshForm) {
+            refreshButton.addEventListener("click", function (event) {
+                event.preventDefault(); // Prevent default button behavior
+
+                // Show the "Refreshing..." message
+                let loadingMessage = document.createElement("div");
+                loadingMessage.id = "loading-message";
+                loadingMessage.innerHTML = "Refreshing facilities, please wait...";
+                loadingMessage.style.backgroundColor = "#f0ad4e"; // Bootstrap warning color
+                loadingMessage.style.padding = "10px";
+                loadingMessage.style.marginTop = "10px";
+                loadingMessage.style.color = "#fff";
+                loadingMessage.style.textAlign = "center";
+
+                document.body.appendChild(loadingMessage);
+
+                // Disable the button
+                refreshButton.disabled = true;
+
+                // Submit the form
+                refreshForm.submit();
+            });
+        }
+
+        const messagesDiv = document.getElementById("django-messages");
+
+        if (messagesDiv && messagesDiv.innerHTML.trim() !== "") {
+            let messageType = messagesDiv.querySelector(".alert")?.classList.contains("alert-success") ? "success" : "error";
+            let messageContent = messagesDiv.innerHTML;
+
+            let messageBox = document.createElement("div");
+            messageBox.id = "status-message";
+            messageBox.innerHTML = messageContent;
+            messageBox.style.padding = "10px";
+            messageBox.style.marginTop = "10px";
+            messageBox.style.color = "#fff";
+            messageBox.style.textAlign = "center";
+            messageBox.style.fontWeight = "bold";
+
+            if (messageType === "success") {
+                messageBox.style.backgroundColor = "#28a745"; // Green for success
+            } else {
+                messageBox.style.backgroundColor = "#dc3545"; // Red for error
+            }
+
+            document.body.appendChild(messageBox);
+
+            // Remove after 5 seconds
+            setTimeout(function () {
+                messageBox.style.display = "none";
+            }, 5000);
+        }
+
+        // Hide the original messages div to prevent empty space
+        if (messagesDiv) {
+            messagesDiv.style.display = "none";
+        }
+
+        // Automatically remove any messages after 5 seconds
+        setTimeout(function () {
+            const messagesDiv = document.getElementById("messages");
+            if (messagesDiv) {
+                messagesDiv.style.display = "none";
+            }
+        }, 5000);
+    });
+</script>
+
 {% endblock %}

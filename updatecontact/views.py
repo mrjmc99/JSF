@@ -135,7 +135,8 @@ def refresh_facilities(request, ei_system_id):
     # Release token
     release_token(selected_ei_system, TOKEN)
 
-    return redirect('search_professional')
+    # Redirect back to the referring page
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER', reverse('search_professional')))
 
 
 # View for updating facilities
@@ -218,9 +219,68 @@ def update_facilities(request, profession_id):
 # View for managing facility groups
 @permission_required('updatecontact.use_updatecontact')
 def manage_facility_groups(request):
-    groups = FacilityGroup.objects.all()
-    if request.method == 'POST':
-        # Handle form submission for adding/removing facilities in groups
-        pass
+    ei_systems = EISystem.objects.all()
+    selected_ei_system = None
+    selected_group = None
+    facility_groups = []
+    assigned_facilities = []
+    available_facilities = []
 
-    return render(request, 'manage_groups.html', {'groups': groups})
+    # Check if 'ei_system_id' is provided in GET request
+    ei_system_id = request.GET.get('ei_system_id')
+    if ei_system_id:
+        try:
+            selected_ei_system = get_object_or_404(EISystem, pk=int(ei_system_id))
+            facility_groups = FacilityGroup.objects.filter(ei_system=selected_ei_system).order_by('name')
+        except ValueError:
+            selected_ei_system = None  # If invalid ID, reset selection
+
+    # Check if 'group_id' is provided in GET request
+    group_id = request.GET.get('group_id')
+    if group_id:
+        try:
+            selected_group = get_object_or_404(FacilityGroup, pk=int(group_id))
+        except ValueError:
+            selected_group = None  # Reset selection if invalid
+
+    if selected_group:
+        assigned_facilities = selected_group.facilities.all().order_by('name')
+        available_facilities = Facility.objects.filter(ei_system=selected_group.ei_system).exclude(
+            id__in=assigned_facilities.values_list('id', flat=True)
+        ).order_by('name')
+
+    if request.method == "POST":
+        ei_system_id = request.POST.get("ei_system_id")
+        action = request.POST.get("action")
+
+        if ei_system_id:
+            ei_system = get_object_or_404(EISystem, pk=ei_system_id)
+
+            if action == "update_groups":
+                group_id = request.POST.get("group_id")
+                if group_id:
+                    group = get_object_or_404(FacilityGroup, id=group_id)
+                    selected_facility_ids = request.POST.getlist("facilities")
+
+                    group.facilities.set(Facility.objects.filter(id__in=selected_facility_ids))
+                    messages.success(request, f"Updated facilities for group: {group.name}")
+
+            elif action == "create_group":
+                new_group_name = request.POST.get("new_group_name")
+                if new_group_name:
+                    new_group = FacilityGroup.objects.create(name=new_group_name, ei_system=ei_system)
+                    messages.success(request, f"Created new facility group: {new_group.name}")
+                    return redirect(f"{request.path}?ei_system_id={ei_system.id}&group_id={new_group.id}")
+
+        return redirect(f"{request.path}?ei_system_id={ei_system_id if ei_system_id else ''}&group_id={group_id if action == 'update_groups' else ''}")
+
+    return render(request, 'manage_groups.html', {
+        "ei_systems": ei_systems,
+        "selected_ei_system": selected_ei_system,
+        "selected_group": selected_group,
+        "facility_groups": facility_groups,
+        "assigned_facilities": assigned_facilities,
+        "available_facilities": available_facilities,
+    })
+
+
