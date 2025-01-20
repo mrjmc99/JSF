@@ -31,44 +31,67 @@
 
 {% if professional %}
     <h2>User: {{ professional.userAccounts }} {{ professional.firstName }} {{ professional.lastName }}</h2>
+
+    <!-- Submit to the view that updates facilities/groups -->
     <form method="post" action="{% url 'update_facilities' professional.professionId %}">
-    {% csrf_token %}
-    <input type="hidden" name="login_name" value="{{ login_name }}">
-    <h3>Current Facilities:</h3>
-    <div id="current-facilities">
-        {% for facility in facilities %}
-            <div>
-                <input type="checkbox" name="current_facilities" class="facility-checkbox" value="{{ facility.facility.id }}" checked>
-                {{ facility.facility.name }}
-            </div>
-        {% endfor %}
-    </div>
-        <button type="submit">Update Facilities</button>
-    <h3>Available Facility Groups:</h3>
-    <div id="facility-groups">
-        {% for group in all_groups %}
-            <div>
-                <input type="checkbox" class="group-checkbox" data-group-id="{{ group.id }}">
-                {{ group.name }}
-            </div>
-        {% endfor %}
-    </div>
-        <button type="submit">Update Facilities</button>
+        {% csrf_token %}
+        <input type="hidden" name="login_name" value="{{ login_name }}">
+        <input type="hidden" name="ei_systems" value="{{ selected_ei_system.name }}">
 
+        <!-- Current Facilities -->
+        <h3>Current Facilities:</h3>
+        <div id="current-facilities">
+            {% for fac in facilities %}
+                <div>
+                    <input
+                        type="checkbox"
+                        name="current_facilities"
+                        class="facility-checkbox"
+                        value="{{ fac.facility.id }}"
+                        checked
+                    >
+                    {{ fac.facility.name }}
+                </div>
+            {% endfor %}
+        </div>
+        <button type="submit">Update Facilities</button>
+        <!-- Facility Groups: now with name="group_ids" and pre-checked if user already has it -->
+        <h3>Available Facility Groups:</h3>
+        <div id="facility-groups">
+            {% for group in all_groups %}
+                <div>
+                    <input
+                        type="checkbox"
+                        class="group-checkbox"
+                        name="group_ids"
+                        value="{{ group.id }}"
+                        data-group-id="{{ group.id }}"
+                        {% if ei_user and group in ei_user.facility_groups.all %}
+                            checked
+                        {% endif %}
+                    >
+                    {{ group.name }}
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Available Facilities -->
         <h3>Available Facilities:</h3>
-    <div id="available-facilities">
-        {% for facility in all_facilities %}
-            <div>
-                <input type="checkbox" name="available_facilities" class="facility-checkbox" value="{{ facility.facility_id }}">
-                {{ facility.name }}
-            </div>
-        {% endfor %}
-    </div>
+        <div id="available-facilities">
+            {% for facility in all_facilities %}
+                <div>
+                    <input
+                        type="checkbox"
+                        name="available_facilities"
+                        class="facility-checkbox"
+                        value="{{ facility.facility_id }}"
+                    >
+                    {{ facility.name }}
+                </div>
+            {% endfor %}
+        </div>
 
-
-
-    <input type="hidden" name="ei_systems" value="{{ selected_ei_system.name }}">
-    <button type="submit">Update Facilities</button>
+        <button type="submit">Update Facilities</button>
     </form>
 {% endif %}
 

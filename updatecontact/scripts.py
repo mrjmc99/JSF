@@ -1,5 +1,10 @@
 # updatecontact/scripts.py
+import logging
+
 import requests
+from django.utils.timezone import now
+from updatecontact.models import Facility, EIUser
+
 
 # Function to get API auth token
 def get_token(ei_system):
@@ -69,3 +74,57 @@ def get_facilities_from_api(ei_system, TOKEN):
     except requests.RequestException as e:
         print(f"Failed to fetch facilities. Error: {str(e)}")
         return []
+
+
+def sync_ei_user_facilities(user: EIUser,ei_system,TOKEN) -> bool:
+    """
+    Pushes the correct facility list for the given EIUser to the EI system.
+    Returns True if successful, else False.
+    """
+    profession_id = user.profession_id
+    login_name = user.login_name
+
+
+    # 2) Fetch existing professional details
+    professional_details = get_professional_details(profession_id, ei_system, TOKEN)
+
+    # 3) Build union of group-based facilities.
+    #    If you also store individually assigned facilities, add them here too.
+    group_facility_ids = Facility.objects.filter(
+        facilitygroup__in=user.facility_groups.all()
+    ).values_list('facility_id', flat=True)
+
+    # Convert to your desired final list of dictionaries (similar to update_facilities logic)
+    updated_facilities = []
+    for fac_id in group_facility_ids:
+        try:
+            fac_obj = Facility.objects.get(ei_system=ei_system, facility_id=fac_id)
+            updated_facilities.append({
+                "id": None,  # or existing if you want to reuse
+                "facility": {
+                    "id": fac_obj.facility_id,
+                    "name": fac_obj.name
+                },
+                "accessType": {
+                    "name": "Staff",
+                    "id": 10000
+                }
+            })
+        except Facility.DoesNotExist:
+            pass
+
+    # 4) Overwrite professionalDepartments
+    professional_details['contact']['professionalDepartments'] = updated_facilities
+    professional_details['contact']['shouldSave'] = True
+
+    # 5) Push to EI
+    logging.info(f"attempting to update {login_name} on {ei_system}")
+    success = update_professional_details(profession_id, ei_system, TOKEN, professional_details)
+
+    if success:
+        print(f"Successful update of {login_name} on {ei_system}")
+        user.last_updated = now()
+        user.save(update_fields=['last_updated'])
+        return True
+    logging.error(f"Failed update of {login_name} on {ei_system}")
+    return False

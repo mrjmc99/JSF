@@ -139,7 +139,7 @@
                 loadingMessage.style.color = "#fff";
                 loadingMessage.style.textAlign = "center";
 
-                document.body.appendChild(loadingMessage);
+                document.body.insertBefore(loadingMessage, document.body.firstChild);
 
                 // Disable the button
                 refreshButton.disabled = true;
@@ -169,8 +169,8 @@
             } else {
                 messageBox.style.backgroundColor = "#dc3545"; // Red for error
             }
-
-            document.body.appendChild(messageBox);
+            document.body.insertBefore(messageBox, document.body.firstChild);
+            // document.body.appendChild(messageBox);
 
             // Remove after 5 seconds
             setTimeout(function () {
