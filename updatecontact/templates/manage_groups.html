@@ -1,15 +1,20 @@
 {% extends "base.html" %}
 {% block content %}
-<div id="django-messages" style="display:none;">
+
+<div id="django-messages">
     {% if messages %}
         {% for message in messages %}
-            <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
+            <div class="alert alert-{{ message.tags }}">
                 {{ message }}
             </div>
         {% endfor %}
     {% endif %}
 </div>
-
+<div id="loading-spinner" style="display:none;" class="d-flex justify-content-center mt-3">
+    <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+</div>
 <h2>Manage Facility Groups</h2>
 
 
@@ -39,7 +44,7 @@
 
 {% if selected_ei_system %}
     <!-- Step 2: Select an Existing Group -->
-    <form method="get">
+    <form method="get" id="select-group-form">
         <input type="hidden" name="ei_system_id" value="{{ selected_ei_system.id }}">
         <label for="group_id">Select Facility Group:</label>
         <select name="group_id" id="group_id" onchange="this.form.submit()">
@@ -55,7 +60,7 @@
     <!-- Step 3: Create a New Group (Hidden if Group is Selected) -->
     <div id="create-group-section" {% if selected_group %}style="display:none;"{% endif %}>
         <h3>Create New Facility Group</h3>
-        <form method="post">
+        <form method="post" id="create-group-form">
             {% csrf_token %}
             <input type="hidden" name="action" value="create_group">
             <input type="hidden" name="ei_system_id" value="{{ selected_ei_system.id }}">
@@ -69,12 +74,12 @@
 <!-- Step 4: Update Facilities for Selected Group -->
 {% if selected_group %}
     <h3>Manage Facilities for Group: {{ selected_group.name }}</h3>
-    <form method="post">
+    <form method="post" id="update-group-form">
         {% csrf_token %}
         <input type="hidden" name="action" value="update_groups">
         <input type="hidden" name="group_id" value="{{ selected_group.id }}">
         <input type="hidden" name="ei_system_id" value="{{ selected_ei_system.id }}">
-        <button type="submit">Update Group</button>
+        <button type="submit" class="btn btn-primary mt-2">Update Group</button>
         <!-- Display Current Facilities First -->
         <h3>Current Facilities in Group</h3>
         <div id="current-facilities">
@@ -87,7 +92,7 @@
                 <p>No facilities currently assigned to this group.</p>
             {% endfor %}
         </div>
-        <button type="submit">Update Group</button>
+        <button type="submit" class="btn btn-primary mt-2">Update Group</button>
         <!-- Display Available Facilities Below -->
         <h3>Available Facilities</h3>
         <div id="available-facilities">
@@ -101,7 +106,7 @@
             {% endfor %}
         </div>
 
-        <button type="submit">Update Group</button>
+        <button type="submit" class="btn btn-primary mt-2">Update Group</button>
     </form>
 {% endif %}
 
@@ -119,9 +124,8 @@
                 }
             });
         }
-    });
 
-     document.addEventListener("DOMContentLoaded", function () {
+        // Show a loading message when refreshing facilities
         const refreshButton = document.getElementById("refresh-facilities-button");
         const refreshForm = document.getElementById("refresh-facilities-form");
 
@@ -129,7 +133,6 @@
             refreshButton.addEventListener("click", function (event) {
                 event.preventDefault(); // Prevent default button behavior
 
-                // Show the "Refreshing..." message
                 let loadingMessage = document.createElement("div");
                 loadingMessage.id = "loading-message";
                 loadingMessage.innerHTML = "Refreshing facilities, please wait...";
@@ -139,12 +142,9 @@
                 loadingMessage.style.color = "#fff";
                 loadingMessage.style.textAlign = "center";
 
+                // Insert loading message at the top of the page
                 document.body.insertBefore(loadingMessage, document.body.firstChild);
-
-                // Disable the button
                 refreshButton.disabled = true;
-
-                // Submit the form
                 refreshForm.submit();
             });
         }
@@ -152,45 +152,55 @@
         const messagesDiv = document.getElementById("django-messages");
 
         if (messagesDiv && messagesDiv.innerHTML.trim() !== "") {
-            let messageType = messagesDiv.querySelector(".alert")?.classList.contains("alert-success") ? "success" : "error";
-            let messageContent = messagesDiv.innerHTML;
+            const messages = messagesDiv.querySelectorAll(".alert");
+            messages.forEach(function(messageElement) {
+                // Create a message box for each message
+                let messageBox = document.createElement("div");
+                messageBox.className = "alert " + (messageElement.className || '');
+                messageBox.innerHTML = messageElement.innerHTML;
+                messageBox.style.padding = "10px";
+                messageBox.style.marginBottom = "10px";
+                messageBox.style.textAlign = "center";
+                messageBox.style.fontWeight = "bold";
 
-            let messageBox = document.createElement("div");
-            messageBox.id = "status-message";
-            messageBox.innerHTML = messageContent;
-            messageBox.style.padding = "10px";
-            messageBox.style.marginTop = "10px";
-            messageBox.style.color = "#fff";
-            messageBox.style.textAlign = "center";
-            messageBox.style.fontWeight = "bold";
+                // Set background color based on alert class
+                if (messageElement.classList.contains("alert-success")) {
+                    messageBox.style.backgroundColor = "#28a745"; // Green for success
+                } else if (messageElement.classList.contains("alert-info")) {
+                    messageBox.style.backgroundColor = "#17a2b8"; // Blue for info
+                } else if (messageElement.classList.contains("alert-warning")) {
+                    messageBox.style.backgroundColor = "#ffc107"; // Yellow for warning
+                } else if (messageElement.classList.contains("alert-danger")) {
+                    messageBox.style.backgroundColor = "#dc3545"; // Red for danger/error
+                }
 
-            if (messageType === "success") {
-                messageBox.style.backgroundColor = "#28a745"; // Green for success
-            } else {
-                messageBox.style.backgroundColor = "#dc3545"; // Red for error
-            }
-            document.body.insertBefore(messageBox, document.body.firstChild);
-            // document.body.appendChild(messageBox);
+                // Insert the messageBox at the top of the page content
+                document.body.insertBefore(messageBox, document.body.firstChild);
 
-            // Remove after 5 seconds
-            setTimeout(function () {
-                messageBox.style.display = "none";
-            }, 5000);
-        }
+                // Remove after 5 seconds
+                setTimeout(function () {
+                    messageBox.style.display = "none";
+                }, 5000);
+            });
 
-        // Hide the original messages div to prevent empty space
-        if (messagesDiv) {
+            // Hide the original messages div to prevent empty space
             messagesDiv.style.display = "none";
         }
-
-        // Automatically remove any messages after 5 seconds
-        setTimeout(function () {
-            const messagesDiv = document.getElementById("messages");
-            if (messagesDiv) {
-                messagesDiv.style.display = "none";
-            }
-        }, 5000);
     });
+    document.addEventListener("DOMContentLoaded", function() {
+    // Example for update-group-form
+    const updateGroupForm = document.getElementById("update-group-form");
+    const loadingSpinner = document.getElementById("loading-spinner");
+
+    if (updateGroupForm) {
+        updateGroupForm.addEventListener("submit", function(event) {
+            // Show spinner
+            loadingSpinner.style.display = "flex";
+        });
+    }
+
+    // Hide spinner after some time or when response is received
+});
 </script>
 
 {% endblock %}
