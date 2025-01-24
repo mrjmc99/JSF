@@ -1,6 +1,5 @@
 # updatecontact/views.py
-import concurrent
-
+import concurrent.futures
 from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponseRedirect
 from django.urls import reverse
@@ -351,7 +350,7 @@ def manage_facility_groups(request):
                     if affected_users:
                         TOKEN = get_token(ei_system)
                         # Provide feedback on how many users we’re going to sync
-                        messages.info(request, f"Syncing {affected_users.count()} user(s) to EI...")
+                        logging.info(f"Syncing {affected_users.count()} user(s) to EI...")
 
                         successful_count = 0
                         failed_count = 0
@@ -382,7 +381,8 @@ def manage_facility_groups(request):
                             messages.success(request, f"Successfully synced {successful_count} user(s).")
                         if failed_count > 0:
                             messages.error(request, f"Failed to sync {failed_count} user(s).")
-                        release_token(ei_system,TOKEN)
+
+                    release_token(ei_system,TOKEN)
 
             elif action == "create_group":
                 new_group_name = request.POST.get("new_group_name")
