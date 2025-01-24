@@ -127,11 +127,14 @@ h1, h2, h3 {
 }
 
 /* Navbar and buttons within it */
-.left-side, .center-logo, .navbar {
-  flex: 1;
+/* Remove flex: 1 from .left-side and .navbar */
+.left-side, .navbar {
+  flex: none; /* Allows these elements to take up only the space they need */
 }
 
+/* Keep flex: 1 only for .center-logo to center it */
 .center-logo {
+  flex: 1;
   text-align: center;
 }
 

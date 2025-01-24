@@ -1,5 +1,6 @@
 # updatecontact/scripts.py
 import logging
+from time import sleep
 
 import requests
 from django.utils.timezone import now
@@ -10,16 +11,18 @@ from updatecontact.models import Facility, EIUser
 def get_token(ei_system):
     auth_url = f"https://{ei_system.ei_fqdn}/authentication/token"
     params = {"user": ei_system.ei_user, "password": ei_system.ei_password}
-
-    try:
-        response = requests.get(auth_url, params=params, verify=False)
-        response.raise_for_status()
-        token = response.text.split('CDATA[')[1].split(']]')[0]
-        print("Token acquired successfully.")
-        return token
-    except requests.RequestException as e:
-        print(f"Failed to acquire token. Error: {str(e)}")
-        raise
+    # attempt to get a token 2 times
+    for attempt in range(2):
+        try:
+            response = requests.get(auth_url, params=params, verify=False)
+            response.raise_for_status()
+            token = response.text.split('CDATA[')[1].split(']]')[0]
+            print("Token acquired successfully.")
+            return token
+        except requests.RequestException as e:
+            print(f"Failed to acquire token. Error: {str(e)}")
+        # Wait before retrying
+        sleep(5)
 
 # Function to get professional's facilities
 def get_professional_details(profession_id, ei_system, TOKEN):
