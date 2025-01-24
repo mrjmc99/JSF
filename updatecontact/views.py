@@ -1,4 +1,6 @@
 # updatecontact/views.py
+import concurrent
+
 from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponseRedirect
 from django.urls import reverse
@@ -354,13 +356,26 @@ def manage_facility_groups(request):
                         successful_count = 0
                         failed_count = 0
 
-                        # Sync each user
-                        for user in affected_users:
-                            success = sync_ei_user_facilities(user, ei_system, TOKEN)
-                            if success:
-                                successful_count += 1
-                            else:
-                                failed_count += 1
+                        # Define the maximum number of threads
+                        max_threads = 10
+
+                        # Use ThreadPoolExecutor to sync users concurrently
+                        with concurrent.futures.ThreadPoolExecutor(max_workers=max_threads) as executor:
+                            # Create a future for each user
+                            futures = {executor.submit(sync_ei_user_facilities, user, ei_system, TOKEN): user for user in
+                                       affected_users}
+
+                            for future in concurrent.futures.as_completed(futures):
+                                user = futures[future]
+                                try:
+                                    success = future.result()
+                                    if success:
+                                        successful_count += 1
+                                    else:
+                                        failed_count += 1
+                                except Exception as exc:
+                                    logging.error(f"User {user.login_name} generated an exception: {exc}")
+                                    failed_count += 1
 
                         # Provide a final summary to the user
                         if successful_count > 0:
