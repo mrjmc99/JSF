@@ -4,15 +4,21 @@ body, h1, h2, h3, p, button, header, footer {
   padding: 0;
 }
 
-/* Make a background color for the whole page */
-body, header, footer {
+/* Set background colors and text colors */
+body, header, footer, main {
   background-color: #333;  /* Dark Gray */
+  color: #cccccc;           /* Light Gray Text */
   font-family: Arial, sans-serif;
-  color: #cccccc;
 }
 
+/* Center text for headers and paragraphs */
 h2, p {
     text-align: center;
+}
+
+/* Add padding to main content */
+main {
+    padding: 20px;
 }
 
 /* Center content in the middle of the page */
@@ -23,7 +29,7 @@ h2, p {
   /*height: 100vh;  /* 100% of the viewport height */
 }
 
-/* Add styles to section */
+/* Style sections */
 section {
   background-color: #333;
   color: white;
@@ -38,13 +44,21 @@ section {
     flex-direction: column;
     align-items: center;
 }
-.app-button {
+
+.app-button, .home-button {
     background-color: #007bff;
     color: white;
     padding: 10px 20px;
     margin: 10px;
     border: none;
     cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    border-radius: 4px;
+}
+
+.app-button:hover, .home-button:hover {
+    background-color: #0056b3;
 }
 
 /* Add styles to buttons */
@@ -56,6 +70,10 @@ button {
   margin: 10px 0;
   border-radius: 4px;
   cursor: pointer;
+}
+
+button:hover {
+  background-color: #0056b3;
 }
 
 /* Add some space below headers */
@@ -77,8 +95,9 @@ h1, h2, h3 {
 .welcome-message {
   font-size: 24px;
   margin-bottom: 20px;
-  color: #333;
+  color: #cccccc; /* Light text for contrast */
 }
+
 .logo {
     height: 50px;  /* or whatever you prefer */
     width: auto;
@@ -90,6 +109,7 @@ h1, h2, h3 {
     justify-content: center;
     align-items: center;
 }
+
 .error-message {
   color: red;
   background-color: #333;
@@ -103,10 +123,10 @@ h1, h2, h3 {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #333;
   padding: 10px;
 }
 
+/* Navbar and buttons within it */
 .left-side, .center-logo, .navbar {
   flex: 1;
 }
@@ -119,7 +139,6 @@ h1, h2, h3 {
   text-align: right;
 }
 
-
 .logout-button {
   background-color: #007bff;
   color: white;
@@ -127,31 +146,12 @@ h1, h2, h3 {
   border: none;
   cursor: pointer;
   text-decoration: none;
-}
-
-.logout-button:hover {
-  background-color: #0056b3;
-}
-
-.logout-button:hover {
-  background-color: #0056b3;
-}
-
-
-button {
-  background-color: #0066cc;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  margin: 10px 0;
   border-radius: 4px;
-  cursor: pointer;
 }
 
-button:hover {
+.logout-button:hover {
   background-color: #0056b3;
 }
-
 
 .styled-table {
     width: 80%;
@@ -161,20 +161,23 @@ button:hover {
     color: white;
     border-radius: 8px;
     text-align: center;
+    border: 1px solid #555;  /* Add a border around the entire table */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);  /* Add a subtle shadow around the table */
 }
 
 .styled-table th, .styled-table td {
     padding: 10px;
-    border-bottom: 1px solid #ddd;
+    border-bottom: 2px solid #555;  /* Make the row borders slightly thicker */
 }
 
 .styled-table tbody tr:last-of-type {
-    border-bottom: none;
+    border-bottom: 1px solid #555;  /* Ensure the last row also has a border */
 }
 
 .styled-table tbody tr:hover {
     background-color: #555;
 }
+
 .table-link {
     color: #FFCC00; /* or any other color you'd like */
     text-decoration: none;
@@ -183,23 +186,16 @@ button:hover {
 .table-link:hover {
     text-decoration: underline;
 }
-.home-button {
-    margin-right: auto;
-    padding: 10px;
-    background-color: #0066cc;
-    color: white;
-    border: none;
-    cursor: pointer;
-    text-decoration: none;
-    display: inline-block;
-}
+
 .navbar a:not(:last-child) {
-  margin-right: 10px;  /* Adds 20 pixels of space to the right of each button except the last one */
+  margin-right: 10px;  /* Adds 10 pixels of space to the right of each button except the last one */
 }
+
 .center-div {
     display: flex;
     justify-content: center;
 }
+
 .custom-dropdown {
     display: none;
     position: relative;
@@ -224,7 +220,7 @@ button:hover {
     max-height: 200px;
     overflow-y: auto;
     background: #333;  /* Dark Gray */
-    z-index: 1;  // to ensure the dropdown appears above other elements
+    z-index: 1;  /* To ensure the dropdown appears above other elements */
 }
 
 #serverList li {
@@ -237,30 +233,11 @@ button:hover {
     background-color: #555;  /* Slightly lighter gray for hover */
     color: #FFCC00;  /* Yellow text on hover for better visibility */
 }
-.styled-table {
-    ...
-    border: 1px solid #555;  /* Add a border around the entire table */
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);  /* Add a subtle shadow around the table */
-}
-
-.styled-table th {
-    ...
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2);  /* Add a shadow below the table header for depth */
-}
 
 .styled-table tr:nth-of-type(odd) {
     background-color: #444;  /* Slightly lighter row color for alternating rows */
 }
 
-.styled-table th, .styled-table td {
-    ...
-    border-bottom: 2px solid #555;  /* Make the row borders slightly thicker */
-}
-
-.styled-table tbody tr:last-of-type {
-    border-bottom: 1px solid #555;  /* Ensure the last row also has a border */
-}
-/* Collapsible button style */
 .collapsible {
     background-color: #f1f1f1;
     color: #333;
@@ -281,9 +258,43 @@ button:hover {
 .table-container {
     display: none;
 }
+
 #progressMessage {
     font-weight: bold;
     color: #0056b3;
     margin-top: 10px;
     /* Optional: You can add more styles or animations here */
+}
+/* Ensure main content area maintains dark background */
+main {
+    background-color: #333;
+    color: #cccccc;
+    padding: 20px;
+}
+
+/* Override Bootstrap's default background for forms and tables if necessary */
+form, .form-select, .form-control, .table, .table th, .table td {
+    background-color: #333 !important;
+    color: #cccccc !important;
+    border-color: #555 !important;
+}
+
+/* Ensure alerts maintain their custom styles */
+.alert {
+    border-radius: 4px;
+}
+
+/* Specificity for certain elements */
+.header {
+    background-color: #333 !important;
+}
+
+.navbar a {
+    color: #cccccc !important;
+}
+
+.logo {
+    height: 50px;
+    width: auto;
+    margin: 10px;
 }

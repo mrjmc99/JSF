@@ -22,13 +22,6 @@
     <button type="submit">Search</button>
 </form>
 
-{% if selected_ei_system %}
-    <form method="get" action="{% url 'refresh_facilities' selected_ei_system.id %}">
-        <button type="submit">Refresh Available Facilities</button>
-    </form>
-
-{% endif %}
-
 {% if professional %}
     <h2>User: {{ professional.userAccounts }} {{ professional.firstName }} {{ professional.lastName }}</h2>
 
