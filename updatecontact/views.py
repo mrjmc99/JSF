@@ -23,7 +23,7 @@ TOKEN = None
 @permission_required('updatecontact.use_updatecontact')
 def search_professional(request):
     professional = None
-    ei_user = None  # <--- We'll pass this into the template later
+    ei_user = None
     facilities = []
     all_facilities = []
     all_groups = []
@@ -32,7 +32,8 @@ def search_professional(request):
     login_name = ""
 
     if request.method == "GET" and 'login_name' in request.GET:
-        login_name = request.GET['login_name']
+        login_name_input = request.GET['login_name'].strip()
+        login_name = login_name_input.lower()  # Normalize for lookup
         selected_ei_system_name = request.GET.get('ei_systems')
 
         if selected_ei_system_name:
@@ -76,11 +77,19 @@ def search_professional(request):
                         ).distinct().order_by('name')
 
                         # Create or get a local EIUser entry to track group memberships, etc.
-                        ei_user, created = EIUser.objects.get_or_create(
-                            ei_system=selected_ei_system,
-                            login_name=login_name,
-                            profession_id=profession_id
-                        )
+                        try:
+                            ei_user = EIUser.objects.get(
+                                ei_system=selected_ei_system,
+                                login_name__iexact=login_name,
+                                profession_id=profession_id
+                            )
+                        except EIUser.DoesNotExist:
+                            # If not found, create a new EIUser with the exact case provided
+                            ei_user = EIUser.objects.create(
+                                ei_system=selected_ei_system,
+                                login_name=login_name,
+                                profession_id=profession_id
+                            )
                     else:
                         # The user was not found in EI for the given loginName
                         all_facilities = Facility.objects.filter(ei_system=selected_ei_system)
@@ -93,6 +102,7 @@ def search_professional(request):
 
             # Release token after use
             release_token(selected_ei_system, TOKEN)
+
 
     return render(request, 'search_contact.html', {
         'professional': professional,   # EI data from the API
@@ -165,7 +175,8 @@ def update_facilities(request, profession_id):
     if request.method == 'POST':
         selected_ei_system_name = request.POST.get('ei_systems')
         selected_ei_system = get_object_or_404(EISystem, name=selected_ei_system_name)
-        login_name = request.POST.get('login_name')
+        login_name_input = request.POST.get('login_name').strip()
+        login_name = login_name_input.lower()  # Normalize for lookup
 
         # 1) Acquire token
         TOKEN = get_token(selected_ei_system)
@@ -175,11 +186,19 @@ def update_facilities(request, profession_id):
         print(f'Original professional details: {professional_details}')
 
         # 3) Fetch or create the local EIUser so we can record group selections
-        ei_user, _ = EIUser.objects.get_or_create(
-            ei_system=selected_ei_system,
-            profession_id=profession_id,
-            login_name=login_name
-        )
+        try:
+            ei_user = EIUser.objects.get(
+                ei_system=selected_ei_system,
+                login_name__iexact=login_name,
+                profession_id=profession_id
+            )
+        except EIUser.DoesNotExist:
+            # Create a new EIUser with the exact case provided
+            ei_user = EIUser.objects.create(
+                ei_system=selected_ei_system,
+                login_name=login_name,
+                profession_id=profession_id
+            )
 
         # 4) Parse the group checkboxes (selected groups) and update the EIUser's local DB association
         checked_group_ids = request.POST.getlist('group_ids', [])

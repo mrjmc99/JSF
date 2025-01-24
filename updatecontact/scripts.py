@@ -82,7 +82,8 @@ def sync_ei_user_facilities(user: EIUser,ei_system,TOKEN) -> bool:
     Returns True if successful, else False.
     """
     profession_id = user.profession_id
-    login_name = user.login_name
+    login_name_input = user.login_name.strip()
+    login_name = login_name_input.lower()  # Normalize for lookup
 
 
     # 2) Fetch existing professional details
