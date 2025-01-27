@@ -382,7 +382,7 @@ def manage_facility_groups(request):
                         if failed_count > 0:
                             messages.error(request, f"Failed to sync {failed_count} user(s).")
 
-                    release_token(ei_system,TOKEN)
+                        release_token(ei_system,TOKEN)
 
             elif action == "create_group":
                 new_group_name = request.POST.get("new_group_name")
