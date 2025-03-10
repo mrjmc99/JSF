@@ -15,7 +15,7 @@ class RemoteWindowsServerAdmin(admin.ModelAdmin):
 
 @admin.register(RemoteLinuxServer)
 class RemoteLinuxServerAdmin(admin.ModelAdmin):
-    list_display = ['name', 'ip_address', 'logs_folder', 'ssh_username', 'core']
+    list_display = ['name', 'ip_address', 'logs_folder', 'ssh_username', 'ssh_key_path', 'core']
     list_filter = ['core']
     search_fields = ['name', 'ip_address', 'ssh_username']
 

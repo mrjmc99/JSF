@@ -13,7 +13,7 @@ import re
 import paramiko
 import os
 import io
-
+import posixpath
 
 # Configure the logging
 logger = logging.getLogger(__name__)
@@ -170,14 +170,16 @@ def process_server(server, search_pattern, results_list, is_specific_search=Fals
 
 def process_server_linux(server, search_pattern, results_list, is_specific_search=False):
     ssh_username = server.ssh_username
-    ssh_key_str = server.ssh_key  # This returns the decrypted key string
+    # Use the ssh_key_path from the model; if not set, the default is already provided.
+    private_key_path = server.ssh_key_path
+
     client = paramiko.SSHClient()
+    client.load_system_host_keys()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
     try:
-        print(f"Connecting to {server.name} at {server.ip_address} via SSH")
-        key_obj = paramiko.RSAKey.from_private_key(io.StringIO(ssh_key_str))
-        client.connect(server.ip_address, username=ssh_username, pkey=key_obj)
+        print(f"Connecting to {server.name} at {server.ip_address} via SSH using key file {private_key_path}")
+        client.connect(server.ip_address, username=ssh_username, key_filename=private_key_path)
         sftp = client.open_sftp()
 
         remote_dir = server.logs_folder
@@ -188,9 +190,8 @@ def process_server_linux(server, search_pattern, results_list, is_specific_searc
         recent_log_files = log_files[-1:]
 
         for log_file in recent_log_files:
-            full_path = os.path.join(remote_dir, log_file)
+            full_path = posixpath.join(remote_dir, log_file)
             print(f"Processing file: {full_path}")
-
             try:
                 with sftp.file(full_path, 'r') as file_obj:
                     content = file_obj.read().decode('utf-8', errors='ignore')
@@ -199,11 +200,9 @@ def process_server_linux(server, search_pattern, results_list, is_specific_searc
                     for i, line in enumerate(lines):
                         if re.search(search_pattern, line):
                             timestamp = extract_and_convert_timestamp(lines[i - 1])
-
                             if is_specific_search:
                                 log_details = extract_log_details(line)
                                 key = (log_details['calling_ae'], log_details['called_ae'])
-
                                 if any(entry[0] == key for entry in results_list):
                                     index = next((i for i, entry in enumerate(results_list) if entry[0] == key), None)
                                     existing_timestamp = results_list[index][1]['timestamp']

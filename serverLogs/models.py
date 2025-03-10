@@ -47,9 +47,20 @@ class RemoteLinuxServer(models.Model):
     core = models.ForeignKey(PACSCore, on_delete=models.CASCADE, related_name="linux_servers")
     name = models.CharField(max_length=100)
     ip_address = models.GenericIPAddressField()
-    ssh_username = models.CharField(max_length=100)
-    ssh_key = EncryptedCharField(max_length=2000)
-    logs_folder = models.CharField(max_length=500)
+    ssh_username = models.CharField(
+        max_length=100,
+        default="agfaservice"
+    )
+    # Instead of storing the key contents, store the key file path.
+    ssh_key_path = models.CharField(
+        max_length=500,
+        default="d:/web/JSF/webserverMaintenance/id_rsa",
+        help_text="Path to the SSH private key file"
+    )
+    logs_folder = models.CharField(
+        max_length=500,
+        default="/var/log/agfa/IMPAX_Agility/logging"
+    )
 
     class Meta:
         unique_together = ['core', 'name']
