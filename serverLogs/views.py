@@ -3,13 +3,17 @@ from django.contrib.auth.decorators import permission_required
 from django.shortcuts import render
 from concurrent.futures import ThreadPoolExecutor
 from django.http import HttpResponse
-from .models import PACSCore, RemoteWindowsServer, PredefinedSearch
+from .models import PACSCore, RemoteWindowsServer, PredefinedSearch, RemoteLinuxServer
 import smbclient
 import logging
 import sys
 import time
 from datetime import datetime, timedelta
 import re
+import paramiko
+import os
+import io
+
 
 # Configure the logging
 logger = logging.getLogger(__name__)
@@ -164,7 +168,69 @@ def process_server(server, search_pattern, results_list, is_specific_search=Fals
         smbclient.reset_connection_cache()
 
 
-# Main function to execute search
+def process_server_linux(server, search_pattern, results_list, is_specific_search=False):
+    ssh_username = server.ssh_username
+    ssh_key_str = server.ssh_key  # This returns the decrypted key string
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+    try:
+        print(f"Connecting to {server.name} at {server.ip_address} via SSH")
+        key_obj = paramiko.RSAKey.from_private_key(io.StringIO(ssh_key_str))
+        client.connect(server.ip_address, username=ssh_username, pkey=key_obj)
+        sftp = client.open_sftp()
+
+        remote_dir = server.logs_folder
+        log_files = [f for f in sftp.listdir(remote_dir) if f.startswith('server.error')]
+
+        # Sort the log files (customize this sort key as needed)
+        log_files.sort(key=lambda x: x.split('-')[1].rstrip('.log'))
+        recent_log_files = log_files[-1:]
+
+        for log_file in recent_log_files:
+            full_path = os.path.join(remote_dir, log_file)
+            print(f"Processing file: {full_path}")
+
+            try:
+                with sftp.file(full_path, 'r') as file_obj:
+                    content = file_obj.read().decode('utf-8', errors='ignore')
+                    lines = content.splitlines()
+
+                    for i, line in enumerate(lines):
+                        if re.search(search_pattern, line):
+                            timestamp = extract_and_convert_timestamp(lines[i - 1])
+
+                            if is_specific_search:
+                                log_details = extract_log_details(line)
+                                key = (log_details['calling_ae'], log_details['called_ae'])
+
+                                if any(entry[0] == key for entry in results_list):
+                                    index = next((i for i, entry in enumerate(results_list) if entry[0] == key), None)
+                                    existing_timestamp = results_list[index][1]['timestamp']
+                                    if timestamp > existing_timestamp:
+                                        results_list[index] = (key, {
+                                            'timestamp': timestamp,
+                                            'reason': log_details['reason'],
+                                            'calling_ae': log_details['calling_ae'] or "Unknown AE",
+                                            'called_ae': log_details['called_ae'] or "Unknown AE",
+                                        })
+                                else:
+                                    results_list.append((key, {
+                                        'timestamp': timestamp,
+                                        'reason': log_details['reason'],
+                                        'calling_ae': log_details['calling_ae'] or "Unknown AE",
+                                        'called_ae': log_details['called_ae'] or "Unknown AE",
+                                    }))
+                            else:
+                                results_list.append((timestamp, line))
+            except Exception as file_e:
+                print(f"Error processing file {full_path}: {file_e}")
+    except Exception as e:
+        print(f"Failed to connect to {server.name}: {e}")
+    finally:
+        client.close()
+
+
 # Main function to execute search
 @permission_required('serverLogs.use_serverLogs')
 def execute_search(request):
@@ -180,22 +246,26 @@ def execute_search(request):
         search_pattern = free_text
         is_specific_search = False
 
-    grouped_results = {}
-    servers = RemoteWindowsServer.objects.filter(core_id=pacs_core_id)
-    results_list = []
-
-    with ThreadPoolExecutor() as executor:
-        executor.map(lambda server: process_server(server, search_pattern, results_list, is_specific_search), servers)
-
-    if is_specific_search:
-        print(f"results list= {results_list}")
-        results_list.sort(key=lambda x: x[1]['timestamp'], reverse=True)
-    else:
-        print(f"results list= {results_list}")
-        results_list.sort(key=lambda x: x[1]['timestamp'] if isinstance(x, tuple) and len(x) > 1 else '0', reverse=True)
-
     pacs_core = PACSCore.objects.get(id=pacs_core_id)
     pacs_core_name = pacs_core.name
+
+    # Select server type based on the PACS core's setting.
+    results_list = []
+    with ThreadPoolExecutor() as executor:
+        if pacs_core.server_type == 'linux':
+            servers = RemoteLinuxServer.objects.filter(core=pacs_core)
+            for server in servers:
+                executor.submit(process_server_linux, server, search_pattern, results_list, is_specific_search)
+        else:  # Default to Windows if not Linux
+            servers = RemoteWindowsServer.objects.filter(core=pacs_core)
+            for server in servers:
+                executor.submit(process_server, server, search_pattern, results_list, is_specific_search)
+
+    # Sorting logic remains the same
+    if is_specific_search:
+        results_list.sort(key=lambda x: x[1]['timestamp'], reverse=True)
+    else:
+        results_list.sort(key=lambda x: x[1]['timestamp'] if isinstance(x, tuple) and len(x) > 1 else '0', reverse=True)
 
     if predefined_search_id:
         search_name = predefined_search.name
@@ -208,7 +278,6 @@ def execute_search(request):
         'search_name': search_name,
         'is_specific_search': is_specific_search
     }
-    print(f'is_specific_search: {is_specific_search}')
     return render(request, 'results_template.html', context)
 
 
