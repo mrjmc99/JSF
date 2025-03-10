@@ -24,7 +24,7 @@ def get_token(ei_system):
     params = {"user": ei_system.ei_user, "password": ei_system.ei_password}
 
     try:
-        response = requests.get(auth_url, params=params, verify=True)
+        response = requests.get(auth_url, params=params, verify=False)
         response.raise_for_status()
         TOKEN = response.text.split('CDATA[')[1].split(']]')[0]
     except requests.RequestException as e:
@@ -36,7 +36,7 @@ def release_token(ei_system):
     headers = {"Authorization": f"Bearer {TOKEN}"}
 
     try:
-        response = requests.get(auth_url, headers=headers, verify=True)
+        response = requests.get(auth_url, headers=headers, verify=False)
         response.raise_for_status()
     except requests.RequestException as e:
         logging.error(f"Failed to release token. Error: {str(e)}")
@@ -48,7 +48,7 @@ def check_cluster_node_health(ip_address, max_retries=2):
 
     while retries <= max_retries:
         try:
-            response = requests.get(health_url, timeout=2, verify=0)
+            response = requests.get(health_url, timeout=2, verify=False)
             response.raise_for_status()
             health_status = response.text.strip()
             print(f"Node {ip_address}: {response.status_code} - {response.text.strip()}")
@@ -73,7 +73,7 @@ def call_cluster_api(ei_system):
     cluster_url = f"https://{ei_system.ei_fqdn}/ris/web/v2/queues/availableNodes"
 
     try:
-        response = requests.get(cluster_url, headers=headers, verify=True)
+        response = requests.get(cluster_url, headers=headers, verify=False)
         response.raise_for_status()
         return response.text
     except requests.RequestException as e:
